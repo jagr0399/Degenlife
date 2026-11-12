@@ -1,0 +1,7 @@
+node_modules/
+app/bundled/
+app/release/
+app/npm-standin.cmd
+release/
+Degen Life App/
+*.zip

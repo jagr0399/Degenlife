@@ -1,0 +1,19 @@
+[
+ {"station":"Lofi","title":"Since 2 A.M.","author":"TAD","file":"music/lofi-since-2am.mp3"},
+ {"station":"Lofi","title":"A cup of tea","author":"TAD","file":"music/lofi-cup-of-tea.mp3"},
+ {"station":"Synthwave","title":"Midnight Drive","author":"congusbongus","file":"music/synthwave-midnight-drive.ogg"},
+ {"station":"Synthwave","title":"Lost in the Snow Wave","author":"hatmix","file":"music/synthwave-snow-wave.ogg"},
+ {"station":"Synthwave","title":"Ganymede","author":"congusbongus","file":"music/synthwave-ganymede.ogg"},
+ {"station":"Jazz","title":"(Basically not) Fusion Jazz","author":"Spring Spring","file":"music/jazz-fusion.ogg"},
+ {"station":"Jazz","title":"Giant Steps but smooth","author":"Pro Sensory","file":"music/jazz-giant-steps-smooth.mp3"},
+ {"station":"Jazz","title":"Bird in Hand Night","author":"Fupi","file":"music/jazz-bird-in-hand.ogg"},
+ {"station":"Jazz","title":"Taken Lightly","author":"Pro Sensory","file":"music/jazz-taken-lightly.mp3"},
+ {"station":"Chiptune","title":"Apple Cider","author":"Zane Little Music","file":"music/chiptune-apple-cider.ogg"},
+ {"station":"Chiptune","title":"Talking Cute","author":"Pro Sensory","file":"music/chiptune-talking-cute.mp3"},
+ {"station":"Chiptune","title":"Fields of Ice","author":"Jonathan So","file":"music/chiptune-fields-of-ice.mp3"},
+ {"station":"Chiptune","title":"moon chime","author":"obscure music","file":"music/chiptune-moon-chime.mp3"},
+ {"station":"Ambient","title":"void","author":"Pro Sensory","file":"music/ambient-void.mp3"},
+ {"station":"Ambient","title":"Calm Ambient 1","author":"cynicmusic","file":"music/ambient-calm-synth.mp3"},
+ {"station":"Ambient","title":"Elytra","author":"northivanastan","file":"music/ambient-elytra.ogg"},
+ {"station":"Ambient","title":"Shinsei","author":"obscure music","file":"music/ambient-shinsei.mp3"}
+]

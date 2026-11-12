@@ -1,0 +1,20 @@
+{
+  "name": "degen-life",
+  "productName": "Degen Life",
+  "version": "0.1.0",
+  "description": "Bagholder: Degen Life - a 3D memecoin trading life sim (fake money only)",
+  "author": "Degen Life",
+  "main": "main.js",
+  "private": true,
+  "build": {
+    "appId": "local.degenlife.game",
+    "productName": "Degen Life",
+    "files": ["main.js", "preload.js", "savefiles.js", "bundled/**", "package.json"],
+    "directories": { "output": "release" },
+    "electronDist": "node_modules/electron/dist",
+    "electronVersion": "44.7.0",
+    "npmRebuild": false,
+    "win": { "target": [{ "target": "dir", "arch": ["x64"] }] }
+  },
+  "devDependencies": { "electron": "44.7.0", "electron-builder": "26.15.3" }
+}

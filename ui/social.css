@@ -1,0 +1,75 @@
+/* Chirp / Scope / due-diligence card / news / trophies (shared by the phone and the terminal) */
+.sv-feed { display: grid; gap: 0; }
+.sv-post { display: grid; grid-template-columns: 40px 1fr; gap: 10px; padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.sv-post.you { background: rgba(244,178,62,.05); box-shadow: inset 2px 0 0 #f4b23e; }
+.sv-pfp { width: 40px; height: 40px; border-radius: 50%; background: #1a1e25; flex: none; }
+.sv-pfp.lg { width: 48px; height: 48px; }
+.sv-head { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+.sv-head span { color: #6b7380; font-size: 12px; }
+.vf { width: 15px; height: 15px; flex: none; }
+.sv-text { margin: 3px 0 6px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+.sv-text.big { font-size: 15px; font-weight: 600; letter-spacing: .01em; }
+.sv-coin { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px 0 4px; border-radius: 999px; background: #10131a; border: 1px solid #222833; color: inherit; font: 600 12px Inter, sans-serif; cursor: pointer; }
+.sv-coin:hover { border-color: #f4b23e; }
+.sv-coin img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+.sv-coin em { font-style: normal; }
+.sv-meta { display: flex; gap: 14px; color: #5d6470; font-size: 12px; margin-top: 6px; }
+.sv-kind { text-transform: uppercase; font-size: 10px; font-weight: 700; letter-spacing: .05em; padding: 1px 6px; border-radius: 4px; background: #161a21; }
+.sv-kind.call { color: #2bd67b; } .sv-kind.fud, .sv-kind.callout { color: #ff4d5e; } .sv-kind.narrative { color: #a77bff; }
+.sv-heat { display: grid; gap: 7px; }
+.sv-hrow { display: grid; grid-template-columns: 74px 1fr 46px; align-items: center; gap: 8px; font-size: 12px; }
+.sv-hrow.season span { color: #f4b23e; font-weight: 700; }
+.sv-hrow i { height: 6px; border-radius: 3px; background: #161a21; overflow: hidden; }
+.sv-hrow b { display: block; height: 100%; border-radius: 3px; transition: width .4s ease; }
+.sv-hrow em { font-style: normal; text-align: right; color: #9aa1ad; }
+.sv-scope { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.sv-scope th { color: #5d6470; font-weight: 600; text-align: right; padding: 6px 8px; border-bottom: 1px solid #1d222a; }
+.sv-scope td { padding: 7px 8px; text-align: right; border-bottom: 1px solid #12151b; }
+.sv-scope .l { text-align: left; }
+.sv-scope tr { cursor: pointer; }
+.sv-scope tr:hover td { background: #0d1015; }
+.sv-scope tr.dead { opacity: .45; }
+.sv-mini { width: 18px; height: 18px; border-radius: 50%; vertical-align: -4px; margin-right: 6px; background: #1a1e25; object-fit: cover; }
+.sv-mini.sq { border-radius: 4px; }
+.tier { font: 800 10px Inter, sans-serif; letter-spacing: .06em; padding: 2px 7px; border-radius: 4px; }
+.tier.STRONG { background: rgba(43,214,123,.15); color: #2bd67b; }
+.tier.MEDIUM { background: rgba(244,178,62,.15); color: #f4b23e; }
+.tier.WEAK { background: rgba(255,255,255,.06); color: #7b828e; }
+.sv-dd { padding: 14px; }
+.sv-ddhead { display: flex; align-items: center; gap: 10px; }
+.sv-ddhead div { flex: 1; display: grid; }
+.sv-ddhead span { color: #6b7380; font-size: 12px; }
+.sv-ddhead em { font-style: normal; color: #ff4d5e; font-weight: 700; }
+.sv-ddmeta { display: flex; justify-content: space-between; color: #8a94a6; font-size: 12px; margin: 10px 0 8px; padding-bottom: 8px; border-bottom: 1px solid #1d222a; }
+.sv-ddfoot { color: #8a94a6; font-size: 12px; margin-top: 6px; }
+.sv-news { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.06); line-height: 1.4; }
+.sv-news span { display: block; color: #f4b23e; font-size: 11px; font-weight: 700; margin-bottom: 2px; }
+.sv-ach { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; }
+.sv-ach div { padding: 10px; border-radius: 8px; background: #0d1015; border: 1px solid #1d222a; display: grid; gap: 3px; opacity: .55; }
+.sv-ach div.got { opacity: 1; border-color: rgba(244,178,62,.4); }
+.sv-ach span { color: #8a94a6; font-size: 11.5px; }
+.sv-empty { padding: 24px; color: #6b7380; text-align: center; }
+.up { color: #2bd67b; }
+.down { color: #ff4d5e; }
+/* Chirp timeline: composer, actions, notifications */
+.sv-acts { display: flex; align-items: center; gap: 4px; margin-top: 8px; color: #7b828e; font-size: 12px; }
+.sv-acts button { display: inline-flex; align-items: center; gap: 5px; background: none; border: 0; color: inherit; font: inherit; padding: 4px 10px 4px 6px; border-radius: 999px; cursor: pointer; min-width: 64px; }
+.sv-acts button:hover { background: rgba(74,168,255,.1); color: #4aa8ff; }
+.sv-acts button[data-rt]:hover, .sv-acts button.rt { color: #2bd67b; }
+.sv-acts button[data-like]:hover, .sv-acts button.lk { color: #ff5fa2; }
+.sv-acts button.lk svg { fill: currentColor; }
+.sv-views { display: inline-flex; align-items: center; gap: 5px; margin-right: 8px; }
+.sv-pre { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #7b828e; margin-bottom: 2px; }
+.sv-post.toyou { box-shadow: inset 2px 0 0 #4aa8ff; }
+.sv-replybox { display: flex; gap: 6px; margin-top: 8px; }
+.sv-replybox input { flex: 1; height: 30px; padding: 0 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); color: inherit; font: inherit; outline: none; }
+.sv-replybox button { height: 30px; padding: 0 14px; border-radius: 999px; border: 0; background: #4aa8ff; color: #fff; font-weight: 700; cursor: pointer; }
+.cw { display: grid; grid-template-columns: 40px 1fr; gap: 10px; padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.cw textarea { width: 100%; min-height: 64px; resize: vertical; background: none; border: 0; outline: none; color: inherit; font: 16px/1.4 Inter, system-ui, sans-serif; }
+.cw-bar { display: flex; align-items: center; gap: 10px; border-top: 1px solid rgba(255,255,255,.06); padding-top: 8px; }
+.cw-bar select { height: 28px; border-radius: 999px; border: 1px solid rgba(74,168,255,.4); background: rgba(74,168,255,.08); color: #9ccbff; padding: 0 10px; font: 600 12px Inter, system-ui, sans-serif; }
+.cw-tabs { margin: 8px 14px; }
+.cw-tabs b { color: #4aa8ff; }
+.cw-note { display: flex; gap: 8px; align-items: center; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 13px; color: #c9ced6; }
+.cw-note.new { background: rgba(74,168,255,.06); }
+.sv-replybox[hidden] { display: none; }

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bagholder</title>
+<link rel="stylesheet" href="terminal/app.css">
+<link rel="stylesheet" href="terminal/skin.css">
+<link rel="stylesheet" href="../chart/chart.css">
+<link rel="stylesheet" href="../ui/social.css">
+<link rel="stylesheet" href="terminal/extra.css">
+<link rel="stylesheet" href="terminal/pulse.css">
+<link rel="stylesheet" href="terminal/axiom.css">
+<link rel="stylesheet" href="terminal/more.css">
+</head>
+<body>
+<div id="app"></div>
+<!-- The terminal shares the game's one market: BH comes from the parent page (same origin via degen://). -->
+<script>window.BH = parent.BH;</script>
+<script src="../vendor/lucide.min.js"></script>
+<script src="terminal/chart.js"></script>
+<script src="../chart/view.js"></script>
+<script src="terminal/ui.js"></script>
+<script src="terminal/bank.js"></script>
+<script src="terminal/extra.js"></script>
+<script src="terminal/pulse.js"></script>
+<script src="terminal/pulsefast.js"></script>
+<script src="terminal/axiom.js"></script>
+<script src="terminal/hustle.js"></script>
+<script src="terminal/apps2.js"></script>
+<script src="terminal/apps3.js"></script>
+<script src="terminal/intro.js"></script>
+<script src="terminal/suites.js"></script>
+<script src="terminal/pnlcard.js"></script>
+<script src="terminal/daytrade-ui.js"></script>
+<script src="terminal/solbar.js"></script>
+<script src="terminal/vampui.js"></script>
+<script src="terminal/traits.js"></script>
+<script src="terminal/deploy.js"></script>
+<script>
+  BH.UI.init(parent.BH.Game);
+  parent.postMessage({ type: 'terminal-ready' }, '*');
+</script>
+</body>
+</html>

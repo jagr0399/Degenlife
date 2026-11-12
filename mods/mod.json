@@ -1,0 +1,9 @@
+{
+  "about": "Degen Life mod file. Add your own coin names, Chirp lines and news headlines. Restart the game to load changes.",
+  "coinNames": [
+    { "name": "Moon Toad", "ticker": "MTOAD" },
+    { "name": "Bag Coin", "ticker": "BAG" }
+  ],
+  "chirps": ["gm to everyone except the guy who sold the bottom"],
+  "headlines": ["Local degen reaches 300 trades, still no profit"]
+}
