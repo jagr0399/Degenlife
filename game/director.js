@@ -253,14 +253,14 @@
     nw: { act: [0.10, 0.45, 0.85], mix: [0.01, 0.10, 0.38, 0.30, 0.21], keep: 0.62, wick: 0.025, huge: 0.25, tpc: [2, 6] },
     fs: { act: [0.06, 0.32, 0.72], mix: [0.02, 0.16, 0.40, 0.31, 0.11], keep: 0.66, wick: 0.025, huge: 0.15, tpc: [1, 3] },
     mg: { act: [0.45, 0.75, 1.00], mix: [0.04, 0.34, 0.39, 0.17, 0.06], keep: 0.52, wick: 0.012, huge: 0.12, tpc: [1, 4] },
-    bh: { act: [0.60, 1.00, 1.00], mix: [0.06, 0.30, 0.42, 0.20, 0.02], keep: 0.47, wick: 0.13, huge: 0.10, tpc: [8, 14] },    // $1M+ and hot
+    bh: { act: [0.60, 1.00, 1.00], mix: [0.06, 0.30, 0.42, 0.20, 0.02], keep: 0.47, wick: 0.08, huge: 0.10, tpc: [8, 14] },    // $1M+ and hot
     bc: { act: [0.55, 0.85, 1.00], mix: [0.10, 0.42, 0.34, 0.12, 0.02], keep: 0.50, wick: 0.02, huge: 0.06, tpc: [1, 3] },     // $1M+ and cooling
   };
   // FRENZY (playtest feedback: "charts that are volatile as fuck, instant trades, candles filling up and down, fast charts"):
   // now and then a coin gets swarmed for 20-90 s: every second trades, 6-16 trades a second, big and huge candles in both
   // directions, the live candle whipping up and down inside the second (long wicks both ways), colours flipping.
   // About 1 coin in 7 is a "degen" coin: it plays its story faster and frenzies far more often.
-  STAGE.fz = { act: [1, 1, 1], mix: [0, 0.04, 0.22, 0.38, 0.36], keep: 0.42, wick: 0.35, huge: 0.3, tpc: [9, 16] };
+  STAGE.fz = { act: [1, 1, 1], mix: [0, 0.04, 0.22, 0.38, 0.36], keep: 0.42, wick: 0.12, huge: 0.3, tpc: [9, 16] };   // (playtest: wicks were everywhere; 12%)
   const BODY = [[0.0001, 0.0005], [0.0005, 0.005], [0.005, 0.02], [0.02, 0.05]];
   P.study = function (tk, D, F, sec, gap, rate, wild) {
     const sim = this.game.sim, r = sim.r, mc = sim.mc(tk);
@@ -302,13 +302,13 @@
     const m = (up ? size : -size) + (far ? 0 : gap * F.kap * 0.75);
     // wicks: rare below $1M (and usually down), common when a big coin is hot
     let wu = 0, wl = 0;
-    const wcap = st === STAGE.bh || frenzy ? 0.3 : 0.12;   // study: small-coin wicks top out around 3-14%; a hot big coin's up to ~30%
-    if (r() < st.wick) { const w = Math.min(wcap, Math.max(0.003, size * r.range(1.5, 4))); if (r() < (st === STAGE.bh ? 0.55 : 0.35)) wu = w; else wl = w; }
-    if ((st === STAGE.bh && r() < 0.06) || (frenzy && r() < 0.3)) { const w = Math.min(wcap, size * r.range(2, 6)); if (r() < 0.5) wu += w; else wl += w; }   // blow-off spikes when hot
+    const wcap = st === STAGE.bh ? 0.2 : frenzy ? 0.15 : 0.1;   // study: small-coin wicks top out around 3-14%; a hot big coin's up to ~30%
+    if (r() < st.wick) { const w = Math.min(wcap, Math.max(0.003, size * r.range(1, 2.5))); if (r() < (st === STAGE.bh ? 0.55 : 0.35)) wu = w; else wl = w; }
+    if ((st === STAGE.bh && r() < 0.03) || (frenzy && r() < 0.08)) { const w = Math.min(wcap, size * r.range(1.5, 3.5)); if (r() < 0.5) wu += w; else wl += w; }   // blow-off spikes when hot
     const hi = Math.max(0, m) + wu, lo = Math.min(0, m) - wl;
     let legs = wu && wl ? (up ? [lo, hi, m] : [hi, lo, m]) : wu ? [hi, m] : wl ? [lo, m] : [m];
-    if (frenzy) {   // a few extra swings inside the range before it closes: the candle fills up, then down, then up again
-      const lo2 = Math.min(lo, m - size * 0.6), hi2 = Math.max(hi, m + size * 0.6), zz = [];
+    if (frenzy && r() < 0.3) {   // now and then (3 in 10 seconds) a few swings inside the candle before it closes: it fills up, then down, then up again
+      const lo2 = Math.min(lo, m - size * 0.3), hi2 = Math.max(hi, m + size * 0.3), zz = [];
       for (let q = r.int(2, 4); q > 0; q--) zz.push(q % 2 === (up ? 0 : 1) ? lo2 + (hi2 - lo2) * r.range(0, 0.35) : hi2 - (hi2 - lo2) * r.range(0, 0.35));
       legs = zz.concat(legs);
     }

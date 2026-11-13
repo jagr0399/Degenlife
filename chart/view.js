@@ -369,6 +369,17 @@
 
     // clip to the main pane for candles and overlays
     ctx.save(); ctx.beginPath(); ctx.rect(0, 0, l.plotW, l.mainH); ctx.clip();
+    // (your average buy / sell and the ATH line are drawn first, so they sit behind the candles)
+    // ATH market cap
+    // your average buy / sell market cap on this coin (weighted by tokens, from your fills)
+    {
+      const DP = L.disp || {}, mine = (this.tk.bubbles || []).filter((b) => b.kind === 'you');
+      const avg = (side) => { let sol = 0, tok = 0; for (const b of mine) if (b.side === side && b.mc > 0) { sol += b.sol; tok += b.sol / b.mc; } return tok > 0 ? sol / tok : 0; };
+      const hline = (v, col, label) => { const y = m.yOfPrice(v); if (!(y > 8 && y < l.mainH)) return; ctx.setLineDash([8, 4]); ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(l.plotW, y); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1; ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.fillText(label + ' · ' + this.fmt(v), 10, label === 'Avg buy' ? y + 14 : y - 5); (this._tags = this._tags || []).push({ y, col, text: label === 'Avg buy' ? 'AVG B' : 'AVG S' }); };
+      if (DP.avgBuy !== false) { const v = avg('buy'); if (v) hline(v, '#34d8a0', 'Avg buy'); }
+      if (DP.avgSell !== false) { const v = avg('sell'); if (v) hline(v, '#ff5f78', 'Avg sell'); }
+    }
+    if (this.tk.athMc && (L.disp || {}).ath !== false) { const ya = m.yOfPrice(this.tk.athMc); if (ya > 8 && ya < l.mainH) { ctx.setLineDash([2, 4]); ctx.strokeStyle = '#f4d03e'; ctx.beginPath(); ctx.moveTo(0, ya); ctx.lineTo(l.plotW, ya); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#f4d03e'; ctx.textAlign = 'right'; ctx.fillText('ATH Market Cap', l.plotW - 8, ya - 5); } }
     const bw = Math.max(1, m.barSpacing * 0.72);
     for (let i = r.from; i <= r.to; i++) {
       const b = bars[i], x = m.xOfIndex(i), up = b.c >= b.o;
@@ -406,16 +417,6 @@
       }
       if (DP.migLine !== false && ym > 8 && ym < l.mainH) { ctx.setLineDash([6, 5]); ctx.strokeStyle = '#3fd2c7'; ctx.beginPath(); ctx.moveTo(0, ym); ctx.lineTo(l.plotW, ym); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#3fd2c7'; const top = ym < 44; ctx.textAlign = top ? 'right' : 'left'; ctx.fillText(this.tk.stage === 'amm' ? 'Migrated · ' + this.fmt(gradMc) : 'Migration · ' + this.fmt(gradMc), top ? l.plotW - 8 : 10, top ? ym + 14 : ym - 5); }   // near the top it moves to the right, under the line, so it never covers the price readout
     }
-    // ATH market cap
-    // your average buy / sell market cap on this coin (weighted by tokens, from your fills)
-    {
-      const DP = L.disp || {}, mine = (this.tk.bubbles || []).filter((b) => b.kind === 'you');
-      const avg = (side) => { let sol = 0, tok = 0; for (const b of mine) if (b.side === side && b.mc > 0) { sol += b.sol; tok += b.sol / b.mc; } return tok > 0 ? sol / tok : 0; };
-      const hline = (v, col, label) => { const y = m.yOfPrice(v); if (!(y > 8 && y < l.mainH)) return; ctx.setLineDash([8, 4]); ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(l.plotW, y); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1; ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.fillText(label + ' · ' + this.fmt(v), 10, y - 5); (this._tags = this._tags || []).push({ y, col, text: label === 'Avg buy' ? 'AVG B' : 'AVG S' }); };
-      if (DP.avgBuy !== false) { const v = avg('buy'); if (v) hline(v, '#34d8a0', 'Avg buy'); }
-      if (DP.avgSell !== false) { const v = avg('sell'); if (v) hline(v, '#ff5f78', 'Avg sell'); }
-    }
-    if (this.tk.athMc && (L.disp || {}).ath !== false) { const ya = m.yOfPrice(this.tk.athMc); if (ya > 8 && ya < l.mainH) { ctx.setLineDash([2, 4]); ctx.strokeStyle = '#f4d03e'; ctx.beginPath(); ctx.moveTo(0, ya); ctx.lineTo(l.plotW, ya); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#f4d03e'; ctx.textAlign = 'right'; ctx.fillText('ATH Market Cap', l.plotW - 8, ya - 5); } }
     // trader bubbles: PFP, green ring = buy, red = sell, gold = you, plus a platform badge
     this._bub = [];
     if (this.showBubbles !== false && this.tk.bubbles && m.barSpacing >= 0.3) {
@@ -447,8 +448,9 @@
         if (same) { same.all.push(v.b); continue; }
         const col = perCol.get(v.i); if (col && col.length >= 3 && v.b.kind !== 'you') { col[col.length - 1].all.push(v.b); continue; }
         // above the candle's high; if there's no room at the top of the chart, hang it under the low instead
-        let y = m.yOfPrice(bar.h) - rad - gap, dir = -1;
-        if (y < rad + 2) { y = m.yOfPrice(bar.l) + rad + gap; dir = 1; }
+        // just above the candle's body (not above the tip of a long wick); under the body if there's no room at the top
+        let y = m.yOfPrice(Math.max(bar.o, bar.c)) - rad - gap, dir = -1;
+        if (y < rad + 2) { y = m.yOfPrice(Math.min(bar.o, bar.c)) + rad + gap; dir = 1; }
         let level = 0;
         while (level < 2 && hits(x, y)) { y += dir * (rad * 2 + 2); level++; }
         if (hits(x, y) || y < rad || y > l.mainH - rad) {

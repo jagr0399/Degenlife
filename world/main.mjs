@@ -87,6 +87,9 @@ game.on('walletTrade', (ev) => {
 });
 game.on('menu', () => { if (mode === 'seated') standUp(); });
 game.on('day', (d) => game.emit('toast', { kind: 'info', text: 'Day ' + d + ' begins' }));
+// a delivery shows up in the room right away (no need to leave and come back); at the computer, it's there when you stand up
+let boxesPending = false;
+game.on('delivered', () => { if (SCENE) return; if (mode === 'walk' || mode === 'paused' || mode === 'phone') { buildPlace(game.meta.place); Sound.play('delivery'); } else boxesPending = true; });
 // today's market mood: a banner across the top (and a toast in the terminal)
 const marketBanner = (info) => { if (!info || SCENE) return; HUD.banner(info.ic, 'Day ' + (info.day || game.clock.day) + ': ' + info.label, info.text, info.id === 'bear' || info.id === 'rugs' ? 'bad' : info.id === 'bull' || info.id === 'runners' ? 'good' : ''); if (BH.UI && BH.UI.toast && mode === 'seated') BH.UI.toast('info', info.label + ': ' + info.text); };
 game.on('marketday', marketBanner);
@@ -153,6 +156,7 @@ function startGame(saveText, backupText, opts) {
 function enterWalk() {
   mode = 'walk';
   HUD.closeCard(); HUD.showWorld(true);
+  if (boxesPending) { boxesPending = false; buildPlace(game.meta.place); }
   // the "click to look around" hint only if the mouse really wasn't captured (closing the phone used to flash it every time)
   HUD.hint(false); clearTimeout(enterWalk.t); enterWalk.t = setTimeout(() => { if (mode === 'walk' && !document.pointerLockElement) HUD.hint(true); }, 900);
   controller.state.enabled = true;

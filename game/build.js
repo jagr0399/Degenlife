@@ -111,7 +111,9 @@
   };
   P.afterTime = function () {
     const now = this.game.clock.total;
-    for (let i = this.deliveries.length - 1; i >= 0; i--) if (now >= this.deliveries[i].at) { this.boxes.push(this.deliveries[i].item); this.game.emit('toast', { kind: 'info', text: 'Delivery! A box is at your door.' }); this.deliveries.splice(i, 1); }
+    let came = false;
+    for (let i = this.deliveries.length - 1; i >= 0; i--) if (now >= this.deliveries[i].at) { this.boxes.push(this.deliveries[i].item); this.game.emit('toast', { kind: 'info', text: 'Delivery! A box is at your door.' }); this.deliveries.splice(i, 1); came = true; }
+    if (came) this.game.emit('delivered', this.boxes.length);   // the room puts the box down right away (world/main.mjs)
     const day = this.game.clock.day;
     if (this.sanityDayMark !== day) { this.sanityDayMark = day; const e = this.effects(); if (e.sanityDay) this.game.life.bump('sanity', e.sanityDay); }
   };
