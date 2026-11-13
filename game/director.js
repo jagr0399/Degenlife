@@ -260,7 +260,7 @@
   // now and then a coin gets swarmed for 20-90 s: every second trades, 6-16 trades a second, big and huge candles in both
   // directions, the live candle whipping up and down inside the second (long wicks both ways), colours flipping.
   // About 1 coin in 7 is a "degen" coin: it plays its story faster and frenzies far more often.
-  STAGE.fz = { act: [1, 1, 1], mix: [0, 0.04, 0.22, 0.38, 0.36], keep: 0.42, wick: 0.12, huge: 0.3, tpc: [9, 16] };   // (playtest: wicks were everywhere; 12%)
+  STAGE.fz = { act: [1, 1, 1], mix: [0, 0.08, 0.34, 0.38, 0.20], keep: 0.62, wick: 0.12, huge: 0.3, tpc: [9, 16] };   // (playtest: wicks were everywhere; 12%)
   const BODY = [[0.0001, 0.0005], [0.0005, 0.005], [0.005, 0.02], [0.02, 0.05]];
   P.study = function (tk, D, F, sec, gap, rate, wild) {
     const sim = this.game.sim, r = sim.r, mc = sim.mc(tk);
@@ -269,12 +269,14 @@
     const heat = 1 - Math.exp(-rate * 0.25 * F.act * vb);   // 0 = dead, 1 = hot (template volume, momentum, how far it has to go, viewers)
     // frenzies: a degen coin (1 in 7) plays its story ~1.6x faster and frenzies often; any lively coin under $3M can frenzy
     if (F.degen == null) { F.degen = !D.arch && tk.fate2 !== 'legend' && r() < 0.14; if (F.degen) { const pos = (sim.t - D.t0) / D.sec; D.sec *= 0.62; D.t0 = sim.t - pos * D.sec; } }
-    const canFz = mc < 3e6 && tk.fate2 !== 'doa' && !(D.arch === 'H' && !D.rugged) && D.arch !== 'G' && D.arch !== 'K' && tk.fate2 !== 'legend';
-    if (canFz && !(D.fzUntil > sim.t) && (Director.FORCE_FRENZY || r() < (F.degen ? 0.012 : 0.0015) * (heat > 0.6 || Math.abs(gap) > 0.1 ? 3 : 1) * vb * vb)) {
-      D.fzUntil = sim.t + (Director.FORCE_FRENZY ? 1e9 : r.range(20, 90));
+    const canFz = !Director.NO_FRENZY && mc < 3e6 && tk.fate2 !== 'doa' && !(D.arch === 'H' && !D.rugged) && D.arch !== 'G' && D.arch !== 'K' && tk.fate2 !== 'legend';
+    // (one frenzy, then a 5-10 minute cooldown on that coin; viewers raise the odds only a little, so a crowd can't feed a frenzy forever)
+    if (canFz && !(D.fzUntil > sim.t) && !(D.fzCool > sim.t) && (Director.FORCE_FRENZY || r() < (F.degen ? 0.006 : 0.0008) * (heat > 0.6 || Math.abs(gap) > 0.1 ? 2 : 1) * Math.min(1.5, vb))) {
+      D.fzUntil = sim.t + (Director.FORCE_FRENZY ? 1e9 : r.range(20, 70)); D.fzCool = D.fzUntil + r.range(300, 600);
       tk.hype = Math.max(tk.hype || 0, 2.2);
       if (!Director.FORCE_FRENZY && sim.event && mc > 8000 && r() < 0.5) sim.event('news', tk, '$' + tk.ticker + ' is going crazy: ' + r.pick(['bots and degens piling in', 'the chart is moving every second', 'whales flipping it back and forth', 'someone is sniping every dip']));
     }
+    if (D.arch === 'J' && !D.fzJ && sim.t - tk.born < 40) { D.fzJ = true; D.fzUntil = sim.t + 45; D.fzCool = D.fzUntil + 300; }   // a viral launch opens in a frenzy
     const frenzy = canFz && D.fzUntil > sim.t;
     if (frenzy) tk.hype = Math.max(tk.hype || 0, 2.2);
     const st = frenzy ? STAGE.fz : mc < 15000 ? STAGE.nw : mc < 60000 ? STAGE.fs : mc < 1e6 ? STAGE.mg : heat > 0.6 ? STAGE.bh : STAGE.bc;
@@ -341,7 +343,7 @@
       }
       const pos = (sim.t - D.t0) / D.sec, i = Math.floor(pos), fr = pos - i;
       // a copycat rides its parent: the parent's move since last step pushes this chart too (it fades slowly)
-      if (D.rideOf) { const par = sim.byId.get(D.rideOf), pm = par && !par.dead ? sim.mc(par) : 0; if (pm > 0 && D.rideLast > 0) { D.off = (D.off || 0) + Math.log(pm / D.rideLast) * 1.5; D.offHalf = 600; } D.rideLast = pm; }
+      if (D.rideOf) { const par = sim.byId.get(D.rideOf), pm = par && !par.dead ? sim.mc(par) : 0; if (pm > 0 && D.rideLast > 0) { D.off = (D.off || 0) + Math.log(pm / D.rideLast) * 2; D.offHalf = 600; } D.rideLast = pm; }
       // right after bonding: a -45-65% shakeout within 2-5 minutes, then it recovers (60%) or keeps bleeding (round-2 study)
       if (tk.stage === 'amm' && D.bondT == null) { D.bondT = sim.t; if (tk.fate2 !== 'mega' && tk.fate2 !== 'legend' && D.arch !== 'H' && D.arch !== 'J' && D.arch !== 'G' && r() < 0.75) { D.shakeAt = sim.t + r.range(60, 240); D.shakeD = r.range(0.45, 0.65); D.shakeBack = r() < 0.6; } }
       if (D.shakeAt && sim.t >= D.shakeAt) { D.shakeAt = 0; D.off = (D.off || 0) + Math.log(1 - D.shakeD); D.offHalf = D.shakeBack ? 110 : 900; if (sim.event) sim.event('news', tk, '$' + tk.ticker + ' shakeout after bonding: -' + Math.round(D.shakeD * 100) + '%'); }
@@ -364,6 +366,11 @@
       let pushT = null;
       for (let q = tk.trades.length - 1; q >= 0 && tk.trades[q].t > sim.t - dt - 1e-9; q--) { const tq = tk.trades[q]; if (tq.you || tq.rw) { pushT = tq; break; } }
       if (pushT) { D.off = Math.log(mc / target0); D.offHalf = pushT.side === 'buy' && pushT.rw === 'conviction' ? 150 : pushT.side === 'buy' && pushT.rw ? 60 : 25; }   // a whale's sell gets absorbed quickly; its buys linger
+      // everyone else's trades (KOL buyers, chasers, copy traders, whales, the sim's own crowd) move the price for real:
+      // the story follows them and lets the move fade over 1-2 minutes, instead of dumping it straight back
+      // (playtest: "big candles are getting instantly ate up")
+      // (megas and legends keep their script; a huge one-off dump isn't absorbed)
+      if (!pushT && D.lastMc > 0 && !D.rugged && tk.fate2 !== 'mega' && tk.fate2 !== 'legend' && tk.fate2 !== 'doa' && D.arch !== 'J') { const ext = Math.log(mc / D.lastMc); if (Math.abs(ext) > 0.004 && Math.abs(ext) < 0.25) { D.off = (D.off || 0) + ext; D.offHalf = Math.max(D.offHalf || 25, ext > 0 ? 120 : 80); } }
       D.off *= Math.exp(-dt / (D.offHalf || 25));
       const target = target0 * Math.exp(D.off);
       // the template's volume sets the hype (what Pulse shows as activity)
@@ -389,7 +396,7 @@
       // and the busiest 10% of seconds hold more than half of the trades.
       let rate = (0.6 + 8 * Math.log10(1 + k[4])) * busy * (1 + D.heat * 0.4) + Math.min(10, Math.abs(gap0) * 40);
       if (D.rugged && gap0 < -0.2) rate += 8;                              // a rug is a stampede
-      if (!(D.arch === 'H' && !D.rugged) && !D.oldCrowd) { this.flow(tk, D, dt, gap0, rate, wild, i, k); continue; }
+      if (!(D.arch === 'H' && !D.rugged) && !D.oldCrowd) { this.flow(tk, D, dt, gap0, rate, wild, i, k); D.lastMc = sim.mc(tk); continue; }
       // real trades arrive in clusters (in the big-coin study 70% landed in the same second as the one before)
       // every coin trades in its own way (playtest feedback: "every chart looks the same"): its own typical trade size, how busy it
       // is, how much colour carries on, how wicky it is and how often a burst hits. Rolled once per coin.

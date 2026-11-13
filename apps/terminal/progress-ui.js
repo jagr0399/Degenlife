@@ -155,6 +155,12 @@
     try {
       const el = $('#instant'); if (!el || el.hidden || el.classList.contains('editing') || !UI.tokenId) return out;
       let a = el.querySelector('.in-alerts');
+      // your Charting skill's read on this coin (right more often as Charting levels up)
+      const gm2 = game(), pr = gm2.sys.progress, tk2 = gm2.sim.byId.get(UI.tokenId), gt = pr && tk2 && pr.gut(tk2);
+      let gu = el.querySelector('.in-gut');
+      if (gt) { if (!gu) { gu = document.createElement('div'); gu.className = 'in-gut'; const foot = el.querySelector('.in-foot'); if (foot) foot.before(gu); else el.appendChild(gu); }
+        const gh = '<span>' + icon('sparkles', 'sm') + 'Gut feeling</span><b class="' + (gt.read === 'runner' ? 'up' : gt.read === 'rug' ? 'down' : '') + '">' + gt.text + '</b><span class="dim">' + gt.conf + '%</span>';
+        if (gu._h !== gh) { gu._h = gh; gu.innerHTML = gh; gu.title = 'Your Charting skill (level ' + pr.lvl('chart') + ') reads this coin. It is right about ' + gt.conf + '% of the time.'; } }
       if (!a) { a = document.createElement('div'); a.className = 'in-alerts'; a.innerHTML = '<span>' + icon('bell', 'sm') + 'Alert me at</span><button data-al="1.5">+50%</button><button data-al="2">2x</button><button data-al="0.7">−30%</button>'; const foot = el.querySelector('.in-foot'); if (foot) foot.before(a); else el.appendChild(a); }
     } catch (e) { /* decoration only */ }
     return out;
@@ -166,20 +172,7 @@
     const mc = gm.sim.mc(tk) * +b.dataset.al, o = gm.sys.orders && gm.sys.orders.add(tk.id, 'alert', mc, 1);
     UI.toast(o ? 'info' : 'fail', o ? 'Alert set: $' + tk.ticker + ' at ' + BH.fmt.usd(mc) + '. You\'ll get pinged anywhere, even away from the desk.' : 'Could not set the alert');
   }, true);
-  const origTok = UI.renderToken;
-  if (origTok) UI.renderToken = function () {
-    const out = origTok.apply(this, arguments);
-    try {
-      const gm = game(), pr = gm.sys.progress, tk = this.tokenId && gm.sim.byId.get(this.tokenId), head = document.getElementById('thead'); if (!pr || !tk || !head) return out;
-      const gt = pr.gut(tk); if (!gt) return out;
-      let el = document.getElementById('tkGut');
-      if (!el || el.parentNode !== head) { el = document.createElement('div'); el.id = 'tkGut'; el.className = 'stat gut'; head.appendChild(el); }
-      const h = '<span>GUT FEELING</span><b class="' + (gt.read === 'runner' ? 'up' : gt.read === 'rug' ? 'down' : '') + '">' + gt.text + '</b>';
-      if (el._h !== h) { el._h = h; el.innerHTML = h; el.dataset.tip = 'Your Charting skill (level ' + pr.lvl('chart') + ') reads this coin. It\'s right about ' + gt.conf + '% of the time; level up Charting to trust it more.'; }
-    } catch (e) { /* decoration only */ }
-    return out;
-  };
-
+  // (the gut feeling lives in the instant-trade panel: the token header is already full)
   // suites: History and Bots in Trade, You and Hotkeys in Life, Inspector in Safety
   const S = BH.Suites || [];
   const put = (suite, id) => { const s = S.find((x) => x.id === suite); if (s && !s.apps.includes(id)) s.apps.push(id); };
@@ -195,6 +188,6 @@
   css.textContent = '.pg .pg-sk{margin-bottom:12px}.pg-row{display:flex;align-items:center;gap:8px}.pg-lvl{margin-left:auto;font-weight:800;color:#f4b23e}.pg-bar{display:block;height:6px;border-radius:3px;background:#1d222a;overflow:hidden;margin:6px 0 3px}.pg-bar i{display:block;height:100%}' +
     '.pg-mood{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:8px;background:#11141a;margin-bottom:10px}.pg-mood.good{background:rgba(43,214,123,.1)}.pg-mood.bad{background:rgba(255,77,94,.1)}.pg-mood span{color:var(--text-2);font-size:12.5px}' +
     '.pg-form{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}.pg-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-2)}.pg-form input,.pg-form select{width:120px;height:30px;background:var(--bg-2);border:1px solid var(--line-2);color:var(--text);border-radius:6px;padding:0 8px}.pg-form select{width:220px}' +
-    '.hk{min-width:110px;justify-content:center}#instant .in-alerts{display:flex;align-items:center;gap:4px;padding:4px 8px;font-size:11px;color:var(--text-2)}#instant .in-alerts span{display:flex;align-items:center;gap:4px;margin-right:auto}#instant .in-alerts button{height:22px;padding:0 8px;border-radius:5px;background:var(--bg-2);border:1px solid var(--line-2);color:var(--text);font-weight:700;font-size:11px}#instant .in-alerts button:hover{border-color:#f4b23e}';
+    '.hk{min-width:110px;justify-content:center}#instant .in-alerts{display:flex;align-items:center;gap:4px;padding:4px 8px;font-size:11px;color:var(--text-2)}#instant .in-alerts span{display:flex;align-items:center;gap:4px;margin-right:auto}#instant .in-alerts button{height:22px;padding:0 8px;border-radius:5px;background:var(--bg-2);border:1px solid var(--line-2);color:var(--text);font-weight:700;font-size:11px}#instant .in-alerts button:hover{border-color:#f4b23e}#instant .in-gut{display:flex;align-items:center;gap:6px;padding:2px 8px 4px;font-size:11px;color:var(--text-2)}#instant .in-gut span:first-child{display:flex;align-items:center;gap:4px}#instant .in-gut b{font-weight:700}#instant .in-gut .dim{margin-left:auto}';
   document.head.appendChild(css);
 })(window);
