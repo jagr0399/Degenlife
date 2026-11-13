@@ -15,8 +15,11 @@
   const TOOL_TIP = { alert: 'Price alert: click a level', cursor: 'Cursor (Esc)', hline: 'Horizontal line', trend: 'Trend line', ray: 'Ray', rect: 'Box', fib: 'Fib retracement', text: 'Text note' };
 
   function loadLayout() {
-    const d = { vol: 0.18, rsi: 0.2, height: 470, ind: { vol: true, ema: true, vwap: false, rsi: false }, iv: 1, mode: 'linear', series: 'mc', unit: 'usd' };
-    try { const s = JSON.parse(localStorage.getItem(LAYOUT_KEY) || '{}'); return Object.assign(d, s, { ind: Object.assign(d.ind, s.ind || {}) }); } catch (e) { return d; }
+    const d = { vol: 0.18, rsi: 0.2, height: 470, ind: { vol: false, ema: false, vwap: false, rsi: false }, iv: 1, mode: 'linear', series: 'mc', unit: 'usd' };
+    // no indicators: volume, EMA 9/21, VWAP and RSI are off and their buttons are gone (playtest: nobody used them).
+    // Forced off even on a saved layout that had them on.
+    const OFF = { vol: false, ema: false, vwap: false, rsi: false };
+    try { const s = JSON.parse(localStorage.getItem(LAYOUT_KEY) || '{}'); return Object.assign(d, s, { ind: Object.assign({}, OFF) }); } catch (e) { return Object.assign(d, { ind: Object.assign({}, OFF) }); }
   }
 
   function niceStep(range, target) {
@@ -391,7 +394,7 @@
     if (L.ind.ema) { line(BH.Ind.ema(closes, 9), COL.ema1); line(BH.Ind.ema(closes, 21), COL.ema2); }
     if (L.ind.vwap) line(BH.Ind.vwap(bars), COL.vwap);
     // migration: a horizontal line at the market cap where the bonding curve completes; the price crosses it sideways
-    {
+    if (!this.tk.noMigration) {   // (not on perps: there is no bonding curve)
       const gradMc = this.game ? this.game.sim.gradMc(this.tk) : 61600, ym = m.yOfPrice(gradMc), DP = L.disp || {};
       if (DP.migLine !== false && !(ym > 8 && ym < l.mainH)) {   // off screen: pin a small tag to the edge so it never just vanishes
         const top = ym <= 8, yy = top ? 14 : l.mainH - 6; ctx.fillStyle = '#3fd2c7'; ctx.textAlign = 'left';

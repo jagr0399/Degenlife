@@ -95,7 +95,7 @@
       build(el) {
         el.innerHTML = '<div class="xp px2"><h1>' + icon('activity', 'lg') + 'Perpetuals <span class="dim">· crypto, stocks, futures and MEMEX. Simulated prices, fake SOL.</span></h1>' +
           '<div class="px-grid"><div class="card px-list"><div class="seg px-kinds">' + ['All', 'Crypto', 'Stock', 'Future', 'Index'].map((k) => '<button data-pk="' + k + '">' + (k === 'Stock' ? 'Stocks' : k === 'Future' ? 'Futures' : k) + '</button>').join('') + '</div><div id="pxList"></div></div>' +
-          '<div class="card px-main"><div id="pxHead"></div><canvas id="pxChart"></canvas></div><div class="card" id="pxSide"></div></div><div class="card" id="pxPos"></div></div>';
+          '<div class="card px-main"><div id="pxHead"></div><div id="pxTv" class="px-tv"></div></div><div class="card" id="pxSide"></div></div><div class="card" id="pxPos"></div></div>';
         el.addEventListener('click', (e) => {
           const px = game().sys.perps;
           const k = e.target.closest('[data-pk]'); if (k) { this.kind = k.dataset.pk; $('#pxList')._h = null; return; }
@@ -106,6 +106,30 @@
           toast(px.open(b.dataset.px, mg, l, px.sel || 'MEMEX'));
         });
         el.addEventListener('input', (e) => { if (e.target.id === 'pxL' || e.target.id === 'pxM') this.est(); });
+      },
+      // perps on the pro chart: each market's price history becomes 1-second candles (o = the previous close)
+      tv(px, sel) {
+        const host = $('#pxTv'); if (!host || !BH.ProChart) return;
+        if (!this.chart || this.chart.root !== host) {
+          this.chart = new BH.ProChart(host, { icon, drawings: new BH.Drawings(this.draw = this.draw || {}), game: null, assetBase: '../assets/' });
+          this.chart.factor = () => 1;
+          this.chart.fmt = (v) => (this.chart.L.mode === 'percent' ? ((this.chart.m.percentOf(v) >= 0 ? '+' : '') + this.chart.m.percentOf(v).toFixed(2) + '%') : BH.Perps.fmtP(v));
+          this.chart.showBubbles = false;
+          this.feeds = {};
+        }
+        const h = px.histOf(sel); if (!h.length) return;
+        let fd = this.feeds[sel];
+        if (!fd || !fd.tk.candles.length || h[0].t > fd.lastT + 600) fd = this.feeds[sel] = { tk: { id: 'perp:' + sel, ticker: sel, born: h[0].t, candles: [], bubbles: [], calls: [], stage: 'amm', migratedAt: null, noMigration: true }, lastT: -1, lastP: h[0].p };
+        const c = fd.tk.candles;
+        for (const pt of h) {
+          if (pt.t < fd.lastT) continue;
+          const o = fd.lastP;
+          if (pt.t === fd.lastT && c.length) { const k = c[c.length - 1]; k.c = pt.p; k.h = Math.max(k.h, pt.p); k.l = Math.min(k.l, pt.p); }
+          else c.push({ t: pt.t, o, h: Math.max(o, pt.p), l: Math.min(o, pt.p), c: pt.p, v: Math.abs(pt.p - o) / Math.max(1e-9, o) * 1000, m: null });
+          fd.lastT = pt.t; fd.lastP = pt.p;
+        }
+        if (c.length > 2400) c.splice(0, c.length - 2400);
+        this.chart.setData(fd.tk, game().sim.t);
       },
       est() {
         const px = game().sys.perps, lv = $('#pxLv'), l = $('#pxL'); if (!lv || !l) return;
@@ -121,8 +145,8 @@
           return '<button class="px-row' + (m.id === sel ? ' on' : '') + '" data-pmk="' + m.id + '"><span class="px-dot ' + (px.session(m.id).live ? 'open' : '') + '" title="' + esc(px.hoursText(m.id)) + '"></span><b>' + m.id + (held ? ' <span class="px-held">●</span>' : '') + '</b><span class="dim px-nm">' + esc(m.name) + '</span><span class="px-pr">' + F2(px.priceOf(m.id)) + '</span><span class="' + (ch >= 0 ? 'up' : 'down') + '">' + (ch >= 0 ? '+' : '') + ch.toFixed(2) + '%</span></button>'; }).join(''));
         const open = px.isOpen(sel), ch = px.change(sel, 600);
         setHTML($('#pxHead'), '<div class="px-h"><b>' + sel + '</b><span class="dim">' + esc(mk.name) + ' · ' + mk.kind + '</span><span class="px-big">' + F2(px.priceOf(sel)) + '</span><span class="' + (ch >= 0 ? 'up' : 'down') + '">' + (ch >= 0 ? '+' : '') + ch.toFixed(2) + '% (10m)</span><div class="spacer"></div><span class="chip ' + (px.session(sel).live ? 'ok' : '') + '">' + px.hoursText(sel) + '</span><span class="chip">Max ' + mk.maxLev + 'x</span></div>');
-        const cv = $('#pxChart');
-        if (cv) { const W = cv.clientWidth, H = 280; cv.width = W; cv.height = H; const ctx = cv.getContext('2d'); ctx.fillStyle = '#050608'; ctx.fillRect(0, 0, W, H); const h = px.histOf(sel).slice(-300); if (h.length > 2) { let lo = Infinity, hi = -Infinity; for (const p of h) { lo = Math.min(lo, p.p); hi = Math.max(hi, p.p); } if (hi - lo < hi * 1e-6) { hi *= 1.001; lo *= 0.999; } const Y = (v) => H - 14 - (v - lo) / (hi - lo) * (H - 34); ctx.beginPath(); h.forEach((p, i) => { const x = i / (h.length - 1) * (W - 60), y = Y(p.p); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); const up = h[h.length - 1].p >= h[0].p; ctx.strokeStyle = up ? '#2bd67b' : '#ff4d5e'; ctx.lineWidth = 2; ctx.stroke(); ctx.lineTo(W - 60, H); ctx.lineTo(0, H); ctx.closePath(); const gr = ctx.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, up ? 'rgba(43,214,123,.18)' : 'rgba(255,77,94,.18)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = gr; ctx.fill(); ctx.fillStyle = '#8a93a3'; ctx.font = '11px Inter'; for (let i = 0; i <= 4; i++) { const v = lo + (hi - lo) * i / 4; ctx.fillText(F2(v), W - 56, Y(v) + 4); } for (const p of px.pos.filter((x) => (x.mk || 'MEMEX') === sel)) { for (const [v, col, lbl] of [[p.entry, p.side === 'long' ? '#2bd67b' : '#ff4d5e', p.side.toUpperCase() + ' ' + p.lev + 'x'], [px.liqPrice(p), '#f4b23e', 'LIQ']]) { if (v < lo || v > hi) continue; const y = Y(v); ctx.setLineDash([4, 4]); ctx.strokeStyle = col; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W - 60, y); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = col; ctx.fillText(lbl, 6, y - 4); } } } else { ctx.fillStyle = '#8a93a3'; ctx.font = '13px Inter'; ctx.fillText('Collecting prices…', 16, 30); } }
+        // the same TradingView-style chart as coins: candles, timeframes, zoom/pan, drawing tools, crosshair (perps-tv)
+        this.tv(px, sel);
         const side = $('#pxSide');
         if (side && (!side.querySelector('#pxM') || side.dataset.mk !== sel)) {
           side.dataset.mk = sel;

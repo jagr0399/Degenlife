@@ -113,3 +113,21 @@
     }
   };
 })(typeof window !== 'undefined' ? window : globalThis);
+
+// ---- accounts you follow: their posts are flagged (highlighted in the feed), land in Notifications, and pop a toast ----
+(function (g) {
+  'use strict';
+  const BH = g.BH; if (!BH || !BH.Social) return;
+  const S = BH.Social.prototype, origPost = S.post;
+  S.post = function (acc, kind, text, extra) {
+    const p = origPost.call(this, acc, kind, text, extra);
+    const fol = this.following || {};
+    if (p && acc && acc.handle && fol[acc.handle] && acc.handle !== '@you') {
+      p.fol = true;
+      if (this.note) this.note((acc.name || acc.handle) + ' posted: "' + String(text).slice(0, 80) + (String(text).length > 80 ? '…' : '') + '"', p.id);
+      const t = this.game.sim ? this.game.sim.t : 0;
+      if (!this._folToast || t - this._folToast > 20) { this._folToast = t; if (this.game.emit) this.game.emit('toast', { kind: 'call', text: (acc.name || acc.handle) + ': ' + String(text).slice(0, 90) }); }
+    }
+    return p;
+  };
+})(typeof window !== 'undefined' ? window : globalThis);

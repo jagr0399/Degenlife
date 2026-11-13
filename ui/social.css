@@ -73,3 +73,8 @@
 .cw-note { display: flex; gap: 8px; align-items: center; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 13px; color: #c9ced6; }
 .cw-note.new { background: rgba(74,168,255,.06); }
 .sv-replybox[hidden] { display: none; }
+
+/* posts by accounts you follow */
+.sv-post.fol { box-shadow: inset 3px 0 0 #f4b23e; background: rgba(244, 178, 62, .05); position: relative; }
+.sv-folbadge { position: absolute; top: 8px; right: 10px; font-size: 10px; font-weight: 800; letter-spacing: .04em; color: #f4b23e; text-transform: uppercase; }
+.sv-folcount { font-size: 12px; margin: 0 0 8px; }

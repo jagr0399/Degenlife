@@ -175,3 +175,12 @@
 .chirp .cw-pick > button { width: 36px !important; height: 36px !important; min-height: 0 !important; max-height: 36px !important; padding: 0 !important; margin: 0 !important; border-radius: 50% !important; overflow: hidden !important; display: block !important; line-height: 0 !important; aspect-ratio: auto !important; }
 .chirp .cw-pick > button > img { width: 100% !important; height: 100% !important; max-width: none !important; object-fit: cover; border-radius: 50%; display: block; }
 .chirp .cw-pick > .cw-up { display: flex !important; align-items: center; justify-content: center; font-size: 9px !important; line-height: 1 !important; border: 2px dashed var(--line-2) !important; }
+
+/* perpetuals on the TradingView-style chart: coin-only controls hidden */
+.px2 .px-tv { height: 470px; margin-top: 8px; }
+.px2 .px-tv .pc-series, .px2 .px-tv .pc-unit, .px2 .px-tv .pc-bub, .px2 .px-tv .pc-disp { display: none !important; }
+.px2 .px-grid { grid-template-columns: 260px 1fr 300px; }
+/* edit mode keeps the panel's normal size: each box fills its own column, never its default ~150 px */
+#instant .in-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+#instant .in-grid input { width: 100% !important; min-width: 0 !important; box-sizing: border-box; padding: 0 4px; }
+#instant .in-set input { min-width: 0; box-sizing: border-box; }

@@ -54,3 +54,16 @@ test('rivals_race_weekly_and_pay_the_winner', () => {
   run(g, 120);
   assert.ok(g.sys.social.posts.some((p) => p.kind === 'rival') || Object.values(rv.pnl).some((v) => v !== 0), 'rivals are trading');
 });
+
+test('posts_by_accounts_you_follow_are_flagged_and_notify_you', () => {
+  const g = game(4105); run(g, 5);
+  const s = g.sys.social, k = s.kols[0];
+  s.following = { [k.handle]: true };
+  const toasts = []; g.on('toast', (t) => toasts.push(t));
+  const p = s.post(k, 'call', 'test post from someone you follow', {});
+  assert.ok(p.fol, 'flagged');
+  assert.ok((s.notes || []).some((n) => /test post/.test(n.text)), 'a notification');
+  assert.ok(toasts.some((t) => /test post/.test(t.text)), 'a toast');
+  const q = s.post(s.kols[1], 'call', 'not followed', {});
+  assert.ok(!q.fol);
+});

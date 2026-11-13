@@ -33,7 +33,7 @@
         '<button data-like="' + esc(p.id) + '" class="' + (p.liked ? 'on lk' : '') + '" title="Like">' + ico('heart') + '<span>' + kfmt(p.likes || 0) + '</span></button>' +
         '<span class="sv-views">' + ico('bar-chart-2') + kfmt(p.views || Math.round((p.likes || 0) * 12)) + '</span>' +
         (p.kind && p.kind !== 'chatter' && p.kind !== 'reply' && p.kind !== 'repost' ? '<span class="sv-kind ' + p.kind + '">' + p.kind + '</span>' : '') + '</div>';
-      return '<article class="sv-post' + (p.aboutYou ? ' you' : '') + (p.toYou ? ' toyou' : '') + '"><img class="sv-pfp" src="' + pfp(base, p.pfp) + '"><div class="sv-body">' + pre + '<div class="sv-head"><b>' + esc(who.name || p.name) + '</b>' + (p.gold ? goldTick : p.verified ? tick : '') + '<span>' + esc(who.handle || p.handle) + ' · ' + ago(sim.t - p.t) + '</span></div>' +
+      return '<article class="sv-post' + (p.aboutYou ? ' you' : '') + (p.toYou ? ' toyou' : '') + (p.fol ? ' fol' : '') + '">' + (p.fol ? '<span class="sv-folbadge">Following</span>' : '') + '<img class="sv-pfp" src="' + pfp(base, p.pfp) + '"><div class="sv-body">' + pre + '<div class="sv-head"><b>' + esc(who.name || p.name) + '</b>' + (p.gold ? goldTick : p.verified ? tick : '') + '<span>' + esc(who.handle || p.handle) + ' · ' + ago(sim.t - p.t) + '</span></div>' +
         '<div class="sv-text">' + esc(p.text) + '</div>' + (tk && tk.img != null && (p.kind === 'call' || p.kind === 'launch' || p.celeb || p.media) ? '<button class="sv-media" data-coin="' + esc(tk.id) + '"><img src="' + coinImg(base, tk) + '" loading="lazy"><span>$' + esc(tk.ticker) + ' · ' + esc(tk.name) + '</span></button>' : '') + (p.quote ? '<div class="sv-quote"><div class="sv-head"><img class="sv-qpfp" src="' + pfp(base, p.quote.pfp) + '"><b>' + esc(p.quote.name) + '</b>' + (p.quote.gold ? goldTick : '') + '<span>' + esc(p.quote.handle) + '</span></div><div class="sv-text">' + esc(p.quote.text) + '</div></div>' : '') + chip + acts + '<div class="sv-replybox" data-box="' + esc(p.id) + '" hidden><input placeholder="Post your reply" maxlength="280"><button data-send="' + esc(p.id) + '">Reply</button></div></div></article>';
     },
     // likes / reposts / replies on any rendered feed; returns true when it handled the click
@@ -61,9 +61,14 @@
     whoHTML(game, base) {
       const s = game.sys.social; if (!s) return '';
       const fol = s.following || {};
-      const celebs = (BH.Celebs ? BH.Celebs.CELEBS : []).slice(0, 3).map((c) => ({ name: c.name, handle: c.handle, pfp: c.pfp, gold: true, followers: c.followers }));
-      const kols = s.kols.slice().sort((a, b) => (b.hits || 0) - (a.hits || 0) || b.followers - a.followers).slice(0, 3);
-      return celebs.concat(kols).map((a) => '<div class="sv-who"><img class="sv-pfp" src="' + pfp(base, a.pfp) + '"><div><b>' + esc(a.name) + '</b>' + (a.gold ? goldTick : a.verified ? tick : '') + '<span class="dim">' + esc(a.handle) + ' · ' + kfmt(a.followers) + '</span></div><button class="btn sm' + (fol[a.handle] ? '' : ' primary') + '" data-follow="' + esc(a.handle) + '">' + (fol[a.handle] ? 'Following' : 'Follow') + '</button></div>').join('');
+      const allC = (BH.Celebs ? BH.Celebs.CELEBS : []).map((c) => ({ name: c.name, handle: c.handle, pfp: c.pfp, gold: true, followers: c.followers }));
+      const allK = s.kols.slice().sort((a, b) => (b.hits || 0) - (a.hits || 0) || b.followers - a.followers);
+      const allR = (BH.Rivals ? BH.Rivals.RIVALS : []).map((r) => ({ name: r.name, handle: r.handle, pfp: r.pfp, verified: true, followers: 20000 + r.pfp * 600 }));
+      // rotate: a new set every 2 game minutes, people you already follow drop out (they're in your Following tab)
+      const rot = Math.floor((game.sim ? game.sim.t : 0) / 120), take = (arr, n) => { const free = arr.filter((a) => !fol[a.handle]); const out = []; for (let i = 0; i < Math.min(n, free.length); i++) out.push(free[(rot * n + i) % free.length]); return out; };
+      const picks = take(allC, 3).concat(take(allK, 2), take(allR, 1));
+      const nFol = Object.values(fol).filter(Boolean).length;
+      return (nFol ? '<div class="dim sv-folcount">You follow ' + nFol + ' account' + (nFol > 1 ? 's' : '') + '. Their posts are highlighted.</div>' : '') + picks.map((a) => '<div class="sv-who"><img class="sv-pfp" src="' + pfp(base, a.pfp) + '"><div><b>' + esc(a.name) + '</b>' + (a.gold ? goldTick : a.verified ? tick : '') + '<span class="dim">' + esc(a.handle) + ' · ' + kfmt(a.followers) + '</span></div><button class="btn sm' + (fol[a.handle] ? '' : ' primary') + '" data-follow="' + esc(a.handle) + '">' + (fol[a.handle] ? 'Following' : 'Follow') + '</button></div>').join('');
     },
     scopeHTML(game, base, limit) {
       const s = game.sys.social; if (!s) return '';

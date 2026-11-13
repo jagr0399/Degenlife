@@ -43,3 +43,6 @@
 .pc-disp { gap: 4px; }
 
 .pt-thesis { margin-top: 6px; padding: 6px 8px; border-radius: 6px; background: rgba(244,178,62,.08); border-left: 2px solid #f4b23e; color: #e8d9b8; font-size: 11.5px; line-height: 1.4; font-style: italic; max-width: 260px; }
+
+/* the indicator toggles (Vol / EMA 9/21 / VWAP / RSI) are gone from the toolbar, and the indicators are off: nobody used them */
+.pc-ind { display: none !important; }
