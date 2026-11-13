@@ -264,11 +264,13 @@
   const BODY = [[0.0001, 0.0005], [0.0005, 0.005], [0.005, 0.02], [0.02, 0.05]];
   P.study = function (tk, D, F, sec, gap, rate, wild) {
     const sim = this.game.sim, r = sim.r, mc = sim.mc(tk);
-    const heat = 1 - Math.exp(-rate * 0.25 * F.act);   // 0 = dead, 1 = hot (template volume, momentum, how far it has to go)
+    // more eyes on a coin (game/views.js: market cap, hype, a hot narrative, fresh buys) = it trades faster
+    const vb = tk.viewsBoost || 1;
+    const heat = 1 - Math.exp(-rate * 0.25 * F.act * vb);   // 0 = dead, 1 = hot (template volume, momentum, how far it has to go, viewers)
     // frenzies: a degen coin (1 in 7) plays its story ~1.6x faster and frenzies often; any lively coin under $3M can frenzy
     if (F.degen == null) { F.degen = !D.arch && tk.fate2 !== 'legend' && r() < 0.14; if (F.degen) { const pos = (sim.t - D.t0) / D.sec; D.sec *= 0.62; D.t0 = sim.t - pos * D.sec; } }
     const canFz = mc < 3e6 && tk.fate2 !== 'doa' && !(D.arch === 'H' && !D.rugged) && D.arch !== 'G' && D.arch !== 'K' && tk.fate2 !== 'legend';
-    if (canFz && !(D.fzUntil > sim.t) && (Director.FORCE_FRENZY || r() < (F.degen ? 0.012 : 0.0015) * (heat > 0.6 || Math.abs(gap) > 0.1 ? 3 : 1))) {
+    if (canFz && !(D.fzUntil > sim.t) && (Director.FORCE_FRENZY || r() < (F.degen ? 0.012 : 0.0015) * (heat > 0.6 || Math.abs(gap) > 0.1 ? 3 : 1) * vb * vb)) {
       D.fzUntil = sim.t + (Director.FORCE_FRENZY ? 1e9 : r.range(20, 90));
       tk.hype = Math.max(tk.hype || 0, 2.2);
       if (!Director.FORCE_FRENZY && sim.event && mc > 8000 && r() < 0.5) sim.event('news', tk, '$' + tk.ticker + ' is going crazy: ' + r.pick(['bots and degens piling in', 'the chart is moving every second', 'whales flipping it back and forth', 'someone is sniping every dip']));

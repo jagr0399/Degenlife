@@ -97,7 +97,7 @@
     f.prog.setAttribute('stroke', tk.stage === 'amm' ? '#f4b23e' : prog > 45 ? '#4aa8ff' : '#2bd67b');
     setText(f.age, F.age(sim.t - tk.born));
     const risk = sim.risk(tk);
-    const watchers = Math.max(1, Math.round(risk.holders / 9 + tk.hype * 4));
+    const watchers = tk.views != null ? tk.views : Math.max(1, Math.round(risk.holders / 9 + tk.hype * 4));   // game/views.js
     setHTML(f.watch, icon('eye', 'sm') + watchers);
     const pos = p.pos.get(tk.id);
     setHTML(f.hold, icon('users', 'sm') + risk.holders + (pos && pos.tokens >= 1 ? ' <span class="brand">' + icon('briefcase', 'sm') + '</span>' : '') + (tk.isPlayer ? ' <span class="brand">' + icon('crown', 'sm') + '</span>' : ''));

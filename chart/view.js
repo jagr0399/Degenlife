@@ -312,7 +312,25 @@
   };
 
   // ---- drawing ----
+  // TradingView-style live candle: a new candle starts as a line at its open and grows; every trade eases the body and
+  // wicks to the new price over ~0.1 s instead of jumping. Only the newest candle animates; history is drawn as is.
   P.draw = function () {
+    const bars = this.bars, n = bars ? bars.length : 0;
+    if (!n || (this.win.matchMedia && this.win.matchMedia('(prefers-reduced-motion: reduce)').matches)) return this.drawFrame();
+    const real = bars[n - 1], now = this.win.performance.now();
+    let a = this.anim;
+    if (!a || a.t !== real.t || a.tk !== (this.tk && this.tk.id) || a.iv !== this.L.iv) a = this.anim = { t: real.t, tk: this.tk && this.tk.id, iv: this.L.iv, o: real.o, h: real.o, l: real.o, c: real.o, v: 0, at: now };
+    const k = 1 - Math.exp(-Math.min(100, now - a.at) / 70); a.at = now;
+    a.o = real.o; a.c += (real.c - a.c) * k; a.v += (real.v - a.v) * k;
+    a.h += (real.h - a.h) * k; a.l += (real.l - a.l) * k;
+    a.h = Math.max(a.h, a.o, a.c); a.l = Math.min(a.l, a.o, a.c);
+    const done = Math.abs(real.c - a.c) <= Math.abs(real.c) * 1e-4 && Math.abs(real.h - a.h) <= Math.abs(real.h) * 1e-4 && Math.abs(real.l - a.l) <= Math.abs(real.l) * 1e-4;
+    if (done) { a.c = real.c; a.h = real.h; a.l = real.l; a.v = real.v; }
+    bars[n - 1] = Object.assign({}, real, { o: a.o, h: a.h, l: a.l, c: a.c, v: a.v });
+    try { this.drawFrame(); } finally { bars[n - 1] = real; }
+    if (!done && !this.animQ) { this.animQ = true; this.win.requestAnimationFrame(() => { this.animQ = false; this.draw(); }); }
+  };
+  P.drawFrame = function () {
     const cv = this.cv, ctx = this.ctx;
     const dpr = this.win.devicePixelRatio || 1;
     const W = cv.clientWidth, H = cv.clientHeight;
@@ -525,6 +543,13 @@
     const seg = (label, val, col) => { ctx.fillStyle = COL.axis; ctx.fillText(label, x, 16); x += ctx.measureText(label).width + 3; ctx.fillStyle = col || COL.text; ctx.fillText(val, x, 16); x += ctx.measureText(val).width + 10; };
     ctx.fillStyle = COL.text; ctx.font = '600 11.5px Inter, sans-serif'; const head = '$' + this.tk.ticker + ' · ' + (IVS.find((v) => v[0] === L.iv) || [0, L.iv + 's'])[1] + '  '; ctx.fillText(head, x, 16); x += ctx.measureText(head).width; ctx.font = '11.5px Inter, sans-serif';
     seg('O', this.fmt(b.o), cc); seg('H', this.fmt(b.h), cc); seg('L', this.fmt(b.l), cc); seg('C', this.fmt(b.c), cc); seg('', (ch >= 0 ? '+' : '') + ch.toFixed(2) + '%', cc); seg('Vol', BH.fmt.sol(b.v));
+    if (this.tk.views != null) {   // viewers (game/views.js): a little eye and how many people are watching this chart
+      const ex = x + 7, ey = 12;
+      ctx.save(); ctx.strokeStyle = COL.axis; ctx.fillStyle = COL.axis; ctx.lineWidth = 1.3;
+      ctx.beginPath(); ctx.moveTo(ex - 6, ey); ctx.quadraticCurveTo(ex, ey - 6, ex + 6, ey); ctx.quadraticCurveTo(ex, ey + 6, ex - 6, ey); ctx.stroke();
+      ctx.beginPath(); ctx.arc(ex, ey, 2, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      x += 16; ctx.fillStyle = COL.text; const vs = this.tk.views >= 1000 ? (this.tk.views / 1000).toFixed(1) + 'K' : String(this.tk.views); ctx.fillText(vs, x, 16); x += ctx.measureText(vs).width + 10;
+    }
     if (L.ind.ema) { x = 10; ctx.fillStyle = COL.ema1; ctx.fillText('EMA 9', x, 32); ctx.fillStyle = COL.ema2; ctx.fillText('EMA 21', x + 46, 32); }
   };
   P.img = function (i) {

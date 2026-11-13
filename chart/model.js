@@ -128,10 +128,12 @@
         if (c.m) b.m = (b.m || []).concat(c.m);
         j++;
       }
-      if (!b) { if (!fill) continue; b = { t, o: last, h: last, l: last, c: last, v: 0, m: null }; }
+      if (!b) { if (!fill && t !== end) continue; b = { t, o: last, h: last, l: last, c: last, v: 0, m: null, live: true }; }
       last = b.c;
       out.push(b);
     }
+    // (the current interval always has a bar, even before anyone trades in it: like TradingView, a new candle forms on the
+    // clock and your buy or a whale's lands inside it instead of popping up a candle of its own. Empty past intervals stay skipped.)
     return out;
   };
   // bars skip empty intervals, so time <-> bar index goes through the bars' own times

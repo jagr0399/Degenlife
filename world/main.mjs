@@ -155,9 +155,9 @@ let justSat = false;
 function onLock(on) {
   HUD.hint(!on && mode === 'walk');
   if (on) { game.flags.looked = true; Sound.resume(); }
-  if (!on && mode === 'walk' && !justSat) { if (document.hasFocus()) quickPulse(); else openPause(); }
+  if (!on && mode === 'walk' && !justSat) openPause();   // Esc while walking = the pause menu (T goes to Pulse)
 }
-// Esc while walking = straight to Pulse at the nearest computer (or the pause menu where there is none)
+// T while walking = straight to Pulse at the nearest computer (or the pause menu where there is none)
 function quickPulse() {
   if (mode !== 'walk') return;
   if (room && room.seat) sit(room.seat, 'pulse'); else openPause();
@@ -169,8 +169,9 @@ document.addEventListener('pointerlockerror', () => { if (mode === 'walk' && per
 document.addEventListener('mousedown', (e) => { if (mode !== 'walk' || document.pointerLockElement) return; if (e.target.closest && e.target.closest('button, input, select, textarea, a, .card, .menu, .phone')) return; Sound.resume(); controller.lock(); });
 window.addEventListener('blur', () => { if (mode === 'walk') openPause(); });
 
+let pausedAt = 0;
 function openPause() {
-  mode = 'paused';
+  mode = 'paused'; pausedAt = performance.now();
   save(true);
   if (interactor) interactor.clear();
   Sound.walking(false);
@@ -376,10 +377,10 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'Tab') { e.preventDefault(); if (mode === 'walk') openPhone(); else if (mode === 'phone') closePhone(); return; }
   if (mode === 'walk' && e.code === 'KeyE') use(interactor && interactor.current);
   if (e.code === 'Escape' && mode === 'phone') { closePhone(); return; }
-  if (e.code === 'Escape' && mode === 'walk' && !document.pointerLockElement) { quickPulse(); return; }
+  if (e.code === 'Escape' && mode === 'walk' && !document.pointerLockElement) { controller.unlock(); openPause(); return; }
   if (mode === 'walk' && (e.code === 'KeyP' || e.code === 'F10')) { e.preventDefault(); controller.unlock(); openPause(); return; }
   if (mode === 'walk' && e.code === 'KeyT') { quickPulse(); return; }
-  else if (e.code === 'Escape' && mode === 'paused') { game.resume(); enterWalk(); controller.lock(); }
+  else if (e.code === 'Escape' && mode === 'paused' && performance.now() - pausedAt > 400) { game.resume(); enterWalk(); controller.lock(); }   // (the same Esc that released the mouse doesn't also close the menu)
 });
 
 // ---- frame loop ----
@@ -450,7 +451,7 @@ else {
   if (SCENE === 'walk' && place === 'bedroom') { controller.place(0.55, -0.15, -0.35); controller.state.pitch = -0.55; HUD.hint(false); }
   if (SCENE === 'look') { if (game.sys.story) game.sys.story.on = false; if (params.get('sleepnow')) setTimeout(() => sleep(), 1500); if (params.get('bags')) { const live = game.sim.tokens.filter((t) => !t.dead && t.trades.length).sort((x, y) => game.sim.mc(y) - game.sim.mc(x)); for (const tk of live.slice(0, 3)) game.player.buy(tk.id, 0.6); for (let i = 0; i < 40; i++) { game.sim.step(0.25); game.player.tick(); } game.clock.total = Math.max(game.clock.total, 12); game.sys.perps.open('long', 0.5, 10, 'BTC'); game.sys.perps.open('short', 0.3, 5, 'TSLA'); game.meta.watch = live.slice(3, 5).map((t) => t.id); } const p = params.get('at') ? params.get('at').split(',').map(Number) : null; if (p) { controller.place(p[0], p[1], p[2]); controller.state.pitch = p[3] || -0.1; } HUD.hint(false); }
   if (params.get('track')) { const tk = game.sim.tokens.filter((t) => (t.bubbles || []).length > 5).pop(); if (tk) for (const b of tk.bubbles.slice(-6)) game.sys.tracker.track(b.addr, { name: b.name }); }
-  if (['seated', 'token', 'bank', 'daytrade', 'chirp', 'scope', 'shop', 'dev', 'firm', 'pad', 'desktop', 'discover', 'trackers', 'perps', 'predict', 'rewards', 'news', 'radio', 'trencher', 'hustle', 'clout', 'toolkit', 'finance', 'empire', 'life', 'launch'].includes(SCENE)) {
+  if (['seated', 'token', 'bank', 'daytrade', 'chirp', 'scope', 'shop', 'dev', 'firm', 'pad', 'desktop', 'discover', 'trackers', 'perps', 'predict', 'rewards', 'news', 'radio', 'trencher', 'hustle', 'clout', 'toolkit', 'finance', 'empire', 'life', 'launch', 'stream', 'contracts'].includes(SCENE)) {
     for (let i = 0; i < +(params.get('run') || 0) * 4; i++) { game.sim.step(0.25); game.player.tick(); }   // run=N: fast-forward N seconds (busy charts for screenshots)
     let megaTk = null;
     if (params.get('mega')) { const d = game.sys.director; d.force = 'mega'; megaTk = game.sim.launch(); d.force = null; for (let i = 0; i < +params.get('mega') * 4; i++) { game.sim.step(0.25); game.player.tick(); } }
@@ -484,6 +485,9 @@ else {
       gs.empire.refreshBoard(); gs.empire.accept(gs.empire.board[0].id); gs.empire.open('bar'); gs.empire.open('billboard'); gs.empire.order('studio9', 'art', 3); gs.empire.newPartner();
       const l = gs.life; game.afterTime(); l.adopt('goldfish'); l.oracleDaily(); l.chat.unshift({ day: 2, hour: 14, who: 'Jess', text: 'YOU HIT 6.2x ON $FROG?? dinner on you' }, { day: 2, hour: 15, who: 'Dex', text: 'bro stop revenge trading' }); l.season.xp = 340; l.checkDaily(); l.dreams.unshift({ day: 2, text: 'You dreamt you were trapped in a bonding curve at 99.9%. It never graduated.' });
     }
+    // stream: go live, trade a little for two minutes so the screen has viewers, chat and money
+    if (SCENE === 'stream' && game.sys.stream) { const st = game.sys.stream; st.followers = 3000; st.start(); const live = game.sim.tokens.filter((t) => !t.dead && t.dir).slice(-3); for (let s = 0; s < 120; s++) { if (s % 15 === 0 && live[s % live.length]) game.player.buy(live[s % live.length].id, 0.2); for (let i = 0; i < 4; i++) { game.sim.step(0.25); game.player.tick(); } } }
+    if (SCENE === 'contracts' && game.sys.contracts) { const c = game.sys.contracts; c.onStep(); if (c.list[0]) c.progress(c.list[0].id, c.list[0].goal); if (c.list[1]) c.progress(c.list[1].id, c.list[1].goal / 2); }
     if (SCENE === 'hustle') { const b = game.sys.biz; game.bills.cash = 8000; b.develop({ art: 'pixel', narrative: 'frogs', mascot: 'sad', lore: 'oneline', ticker: 'word' }); b.newApplicants(); b.hire(b.applicants[0].id); b.hire(b.applicants[1].id); b.addClient(); b.addClient(); b.addHeat(42, 'Bot volume'); b.addHeat(8, 'Shilling'); if (params.get('tab')) BH.hustleTab = params.get('tab'); }
     sit(room.seat, SCENE === 'seated' ? 'pulse' : SCENE);
   }

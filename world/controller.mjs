@@ -10,14 +10,22 @@ export function createController(camera, dom, colliders, opts = {}) {
   const settings = opts.settings || { sens: 1, bob: '1' };
   const euler = new THREE.Euler(0, 0, 0, 'YXZ');
 
+  // the mouse "snapping to random points": pointer lock sometimes reports one huge jump (right after the mouse is
+  // captured, after alt-tab, or a stray OS event). Ignore the first moments after capture and any single spike.
+  let lockedAt = 0, lastMx = 0, lastMy = 0;
   function onMove(e) {
     if (!state.locked || !state.enabled) return;
+    if (performance.now() - lockedAt < 120) return;
+    const mx = e.movementX || 0, my = e.movementY || 0;
+    const big = Math.abs(mx) > 180 || Math.abs(my) > 180, jump = (Math.abs(mx) > 60 && Math.abs(mx) > 8 * Math.abs(lastMx) + 40) || (Math.abs(my) > 60 && Math.abs(my) > 8 * Math.abs(lastMy) + 40);
+    lastMx = mx; lastMy = my;
+    if (big || jump) return;
     const k = 0.0022 * (settings.sens || 1);
-    state.yaw -= e.movementX * k;
-    state.pitch = Math.max(-1.45, Math.min(1.45, state.pitch - e.movementY * k));
+    state.yaw -= mx * k;
+    state.pitch = Math.max(-1.45, Math.min(1.45, state.pitch - my * k));
   }
   document.addEventListener('mousemove', onMove);
-  document.addEventListener('pointerlockchange', () => { state.locked = document.pointerLockElement === dom; if (opts.onLockChange) opts.onLockChange(state.locked); });
+  document.addEventListener('pointerlockchange', () => { state.locked = document.pointerLockElement === dom; if (state.locked) { lockedAt = performance.now(); lastMx = lastMy = 0; } if (opts.onLockChange) opts.onLockChange(state.locked); });
   window.addEventListener('keydown', (e) => { if (!e.repeat) keys.add(e.code); });
   window.addEventListener('keyup', (e) => keys.delete(e.code));
   window.addEventListener('blur', () => keys.clear());
@@ -32,7 +40,13 @@ export function createController(camera, dom, colliders, opts = {}) {
   return {
     state,
     place(x, z, yaw) { state.x = x; state.z = z; state.yaw = yaw || 0; state.pitch = -0.05; apply(); },
-    lock() { try { const p = dom.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* not allowed yet */ } },
+    // raw mouse input (no Windows acceleration: the other cause of sudden jumps); plain pointer lock where it isn't supported
+    lock() {
+      try {
+        const p = dom.requestPointerLock({ unadjustedMovement: true });
+        if (p && p.catch) p.catch(() => { try { const q = dom.requestPointerLock(); if (q && q.catch) q.catch(() => {}); } catch (e) { /* not allowed yet */ } });
+      } catch (e) { try { const q = dom.requestPointerLock(); if (q && q.catch) q.catch(() => {}); } catch (e2) { /* not allowed yet */ } }
+    },
     unlock() { if (document.pointerLockElement) document.exitPointerLock(); },
     update(dt) {
       if (!state.enabled) return;

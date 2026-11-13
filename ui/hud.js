@@ -31,7 +31,7 @@
         '<div class="crosshair" id="hCross"></div>' +
         '<div class="prompt" id="hPrompt"></div>' +
         '<div class="toasts" id="hToasts"></div>' +
-        '<div class="hint" id="hHint">Click to look around · WASD to walk · E to use · Esc or T for Pulse · P for menu</div>';
+        '<div class="hint" id="hHint">Click to look around · WASD to walk · E to use · T for Pulse · Esc or P for menu</div>';
       this.$ = (id) => document.getElementById(id);
     },
     render(game) {

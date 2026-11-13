@@ -23,6 +23,13 @@
       }
       if (el._h !== html) { el._h = html; el.innerHTML = html; }
       if (el.dataset.tip !== tip) el.dataset.tip = tip;
+      // viewers (game/views.js): how many people are watching this coin right now
+      if (tk.views != null) {
+        let ve = document.getElementById('tkViews');
+        if (!ve || ve.parentNode !== head) { ve = document.createElement('div'); ve.id = 'tkViews'; ve.className = 'stat views'; ve.dataset.tip = 'People watching this chart right now. More eyes = more trades = a faster chart. Hot narratives, buys, KOL calls and frenzies pull people in.'; head.insertBefore(ve, el.nextSibling); }
+        const vh = '<span>VIEWERS</span><b>' + (g.lucide || BH.icon ? (BH.icon ? BH.icon('eye', 'sm') : '') : '') + ' ' + (tk.views >= 1000 ? (tk.views / 1000).toFixed(1) + 'K' : tk.views) + '</b>';
+        if (ve._h !== vh) { ve._h = vh; ve.innerHTML = vh; }
+      }
     } catch (e) { /* decoration: never break the token page */ }
     return out;
   };

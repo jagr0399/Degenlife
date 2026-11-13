@@ -91,9 +91,12 @@ test('aggregate_5s', () => {
   assert.deepStrictEqual(filled.map((b) => [b.t, b.o, b.h, b.l, b.c, b.v]), [
     [0, 10, 15, 8, 9, 6], [5, 9, 10, 9, 10, 1], [10, 10, 10, 10, 10, 0],
   ]);
-  // like Axiom, an empty interval prints no bar unless asked to fill
+  // like Axiom, an empty past interval prints no bar unless asked to fill; the current one is always there (the live candle)
   const out = BH.ChartModel.aggregate(src, 5, 12);
-  assert.deepStrictEqual(out.map((b) => b.t), [0, 5]);
+  assert.deepStrictEqual(out.map((b) => b.t), [0, 5, 10]);
+  assert.ok(out[2].live && out[2].o === 10 && out[2].c === 10, 'the live candle waits at the last price');
+  const past = BH.ChartModel.aggregate(src.concat([{ t: 16, o: 10, h: 11, l: 10, c: 11, v: 1, m: null }]), 5, 17);
+  assert.deepStrictEqual(past.map((b) => b.t), [0, 5, 15], 'the empty 10-15 interval is skipped once it is over');
   assert.strictEqual(BH.ChartModel.idxOfT(out, 6, 5), 1.2);
   assert.strictEqual(BH.ChartModel.tOfIdx(out, 1.2, 5), 6);
   assert.deepStrictEqual(out[0].m, ['B']);
