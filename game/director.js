@@ -140,6 +140,9 @@
       else {
         // the biggest eligible holder, in one pass (no filter + sort over thousands of wallets on every trade)
         let any = null; for (const x of tk.hl) { if (x.tokens > 1 && (!any || x.tokens > any.tokens) && x.addr !== 'YOU' && !x.rw && x.addr !== D.pw && !(x.pt && sim.t - x.pt < 60) && !(String(x.addr).startsWith('FIRM-') || String(x.addr).startsWith('COPY-')) && (x.kind !== 'dev' || D.rugged) && x.kind !== 'whale') any = x; }
+        // nobody in the crowd can sell: a whale bag that has sat for a minute sells into it (otherwise the
+        // whale owns the float, every sell fails, and the chart can only go up)
+        if (!any) for (const x of tk.hl) { if (x.tokens > 1 && (!any || x.tokens > any.tokens) && x.addr !== 'YOU' && !x.rw && !(x.pt && sim.t - x.pt < 60) && !(String(x.addr).startsWith('FIRM-') || String(x.addr).startsWith('COPY-')) && (x.kind !== 'dev' || D.rugged)) any = x; }
         if (any) sim.exec(tk, any.addr, any.kind, 'sell', Math.min(any.tokens, part));
       }
     }
@@ -164,9 +167,13 @@
     }
     // play the planned trades that are due
     while (D.plan.length && D.plan[0].at <= sim.t + 1e-9 && !tk.dead) {
-      const p = D.plan.shift(), now = sim.mc(tk), st = steer(sim, tk, now * Math.exp(p.d));
-      if (!st || !(st.amt > 0)) continue;
-      this.act(tk, D, st.side, st.amt, tk.fate2 === 'whale' && Math.abs(p.d) > 0.03, i, k[4] >= 5);   // (a whale coin's big prints are its whale)
+      // a study plan aims at price levels within the second: if a trade came up short (no holder had enough to sell),
+      // the next one makes up the difference, so a frenzy can't ratchet one way. Your own and whales' trades still count.
+      const p = D.plan.shift(), now = sim.mc(tk), d = p.lv != null ? p.lv - (D.lvDone || 0) : p.d, st = steer(sim, tk, now * Math.exp(d));
+      if (!st || !(st.amt > 0)) { if (p.lv != null) D.lvDone = p.lv; continue; }
+      this.act(tk, D, st.side, st.amt, tk.fate2 === 'whale' && !p.fz && Math.abs(d) > 0.03, i, k[4] >= 5);   // (a whale coin's big prints are its whale; a frenzy is the crowd)
+      // (a trade that couldn't move the price at all, like a sell at the curve floor, is accepted: the plan moves on)
+      if (p.lv != null) { const moved = Math.log(Math.max(1e-9, sim.mc(tk)) / now); D.lvDone = Math.abs(moved) < 1e-6 ? p.lv : (D.lvDone || 0) + moved; }
     }
   };
 
@@ -249,11 +256,26 @@
     bh: { act: [0.60, 1.00, 1.00], mix: [0.06, 0.30, 0.42, 0.20, 0.02], keep: 0.47, wick: 0.13, huge: 0.10, tpc: [8, 14] },    // $1M+ and hot
     bc: { act: [0.55, 0.85, 1.00], mix: [0.10, 0.42, 0.34, 0.12, 0.02], keep: 0.50, wick: 0.02, huge: 0.06, tpc: [1, 3] },     // $1M+ and cooling
   };
+  // FRENZY (playtest feedback: "charts that are volatile as fuck, instant trades, candles filling up and down, fast charts"):
+  // now and then a coin gets swarmed for 20-90 s: every second trades, 6-16 trades a second, big and huge candles in both
+  // directions, the live candle whipping up and down inside the second (long wicks both ways), colours flipping.
+  // About 1 coin in 7 is a "degen" coin: it plays its story faster and frenzies far more often.
+  STAGE.fz = { act: [1, 1, 1], mix: [0, 0.04, 0.22, 0.38, 0.36], keep: 0.42, wick: 0.35, huge: 0.3, tpc: [9, 16] };
   const BODY = [[0.0001, 0.0005], [0.0005, 0.005], [0.005, 0.02], [0.02, 0.05]];
   P.study = function (tk, D, F, sec, gap, rate, wild) {
     const sim = this.game.sim, r = sim.r, mc = sim.mc(tk);
     const heat = 1 - Math.exp(-rate * 0.25 * F.act);   // 0 = dead, 1 = hot (template volume, momentum, how far it has to go)
-    const st = mc < 15000 ? STAGE.nw : mc < 60000 ? STAGE.fs : mc < 1e6 ? STAGE.mg : heat > 0.6 ? STAGE.bh : STAGE.bc;
+    // frenzies: a degen coin (1 in 7) plays its story ~1.6x faster and frenzies often; any lively coin under $3M can frenzy
+    if (F.degen == null) { F.degen = !D.arch && tk.fate2 !== 'legend' && r() < 0.14; if (F.degen) { const pos = (sim.t - D.t0) / D.sec; D.sec *= 0.62; D.t0 = sim.t - pos * D.sec; } }
+    const canFz = mc < 3e6 && tk.fate2 !== 'doa' && !(D.arch === 'H' && !D.rugged) && D.arch !== 'G' && D.arch !== 'K' && tk.fate2 !== 'legend';
+    if (canFz && !(D.fzUntil > sim.t) && (Director.FORCE_FRENZY || r() < (F.degen ? 0.012 : 0.0015) * (heat > 0.6 || Math.abs(gap) > 0.1 ? 3 : 1))) {
+      D.fzUntil = sim.t + (Director.FORCE_FRENZY ? 1e9 : r.range(20, 90));
+      tk.hype = Math.max(tk.hype || 0, 2.2);
+      if (!Director.FORCE_FRENZY && sim.event && mc > 8000 && r() < 0.5) sim.event('news', tk, '$' + tk.ticker + ' is going crazy: ' + r.pick(['bots and degens piling in', 'the chart is moving every second', 'whales flipping it back and forth', 'someone is sniping every dip']));
+    }
+    const frenzy = canFz && D.fzUntil > sim.t;
+    if (frenzy) tk.hype = Math.max(tk.hype || 0, 2.2);
+    const st = frenzy ? STAGE.fz : mc < 15000 ? STAGE.nw : mc < 60000 ? STAGE.fs : mc < 1e6 ? STAGE.mg : heat > 0.6 ? STAGE.bh : STAGE.bc;
     const lerp = (a, b, t) => a + (b - a) * t;
     const pAct = heat < 0.5 ? lerp(st.act[0], st.act[1], heat * 2) : lerp(st.act[1], st.act[2], heat * 2 - 1);
     const far = Math.abs(gap) > 0.15;   // behind its story: it trades now
@@ -262,6 +284,7 @@
     const lean = Math.max(-0.45, Math.min(0.45, gap * 5));
     let up = D.lastUp != null && r() < st.keep ? D.lastUp : r() < 0.5;
     if (Math.abs(lean) > 0.02 && r() < Math.abs(lean) * 1.6) up = lean > 0;
+    if (frenzy && far && r() < 0.85) up = gap > 0;   // a frenzy chops both ways, but a coin far off its story still gets there
     D.lastUp = up;
     // size: drawn from this stage's mix (wilder stretches of the real template lean bigger)
     const mix = st.mix.slice(); const wf = Math.max(0.6, Math.min(1.8, Math.sqrt((wild || 0.04) / 0.04)));
@@ -277,13 +300,18 @@
     const m = (up ? size : -size) + (far ? 0 : gap * F.kap * 0.75);
     // wicks: rare below $1M (and usually down), common when a big coin is hot
     let wu = 0, wl = 0;
-    const wcap = st === STAGE.bh ? 0.3 : 0.12;   // study: small-coin wicks top out around 3-14%; a hot big coin's up to ~30%
+    const wcap = st === STAGE.bh || frenzy ? 0.3 : 0.12;   // study: small-coin wicks top out around 3-14%; a hot big coin's up to ~30%
     if (r() < st.wick) { const w = Math.min(wcap, Math.max(0.003, size * r.range(1.5, 4))); if (r() < (st === STAGE.bh ? 0.55 : 0.35)) wu = w; else wl = w; }
-    if (st === STAGE.bh && r() < 0.06) { const w = Math.min(wcap, size * r.range(2, 6)); if (r() < 0.5) wu += w; else wl += w; }   // blow-off spikes when hot
+    if ((st === STAGE.bh && r() < 0.06) || (frenzy && r() < 0.3)) { const w = Math.min(wcap, size * r.range(2, 6)); if (r() < 0.5) wu += w; else wl += w; }   // blow-off spikes when hot
     const hi = Math.max(0, m) + wu, lo = Math.min(0, m) - wl;
-    const legs = wu && wl ? (up ? [lo, hi, m] : [hi, lo, m]) : wu ? [hi, m] : wl ? [lo, m] : [m];
+    let legs = wu && wl ? (up ? [lo, hi, m] : [hi, lo, m]) : wu ? [hi, m] : wl ? [lo, m] : [m];
+    if (frenzy) {   // a few extra swings inside the range before it closes: the candle fills up, then down, then up again
+      const lo2 = Math.min(lo, m - size * 0.6), hi2 = Math.max(hi, m + size * 0.6), zz = [];
+      for (let q = r.int(2, 4); q > 0; q--) zz.push(q % 2 === (up ? 0 : 1) ? lo2 + (hi2 - lo2) * r.range(0, 0.35) : hi2 - (hi2 - lo2) * r.range(0, 0.35));
+      legs = zz.concat(legs);
+    }
     // trades in this second: a few on a small coin, a crowd on a hot big one; a wick is a buy and a sell landing together
-    const nT = Math.max(legs.length, Math.min(12, Math.round(st.tpc[0] * Math.exp(r.normal() * 0.6))));
+    const nT = Math.max(legs.length, Math.min(frenzy ? 18 : 12, Math.round(st.tpc[0] * Math.exp(r.normal() * 0.6))));
     let at = 0, left = nT - legs.length;
     const out = [];
     for (const tgt of legs) {
@@ -293,7 +321,8 @@
       let rem = d; for (let q = 0; q < parts; q++) { const p = q === parts - 1 ? rem : d / parts * r.range(0.4, 1.6); rem -= p; out.push(p); }
     }
     const ts = out.map(() => r() * 0.95).sort((p, q) => p - q);
-    out.forEach((d, j) => D.plan.push({ d, at: sec + ts[j] }));
+    D.lvDone = 0; let lv = 0;
+    out.forEach((d, j) => { lv += d; D.plan.push({ lv, at: sec + ts[j], fz: frenzy }); });
   };
 
   P.onStep = function (dt) {

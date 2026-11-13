@@ -54,17 +54,20 @@ test('a_market_crash_drags_sol_down', () => {
 });
 
 test('coins_follow_sol_instead_of_fighting_it', () => {
-  const g = game(505), m = g.sys.macro; m.next = 1e9;
-  run(g, 60);
-  const tk = g.sim.tokens.filter((t) => t.dir && !t.dir.done && !t.dead && t.dir.mc0).pop();
-  assert.ok(tk, 'a directed coin is live');
-  const sol0 = tk.dir.sol0;
-  assert.ok(sol0 > 0);
-  // SOL +20%: the coin's path in USD is now 20% higher, so nobody has to sell it back down
-  m.sol = m.anchor = sol0 * 1.2; BH.C.SOL_USD = m.sol;
-  const priceSol = g.sim.price(tk);
-  run(g, 3);
-  assert.ok(g.sim.price(tk) > priceSol * 0.8, 'the price in SOL was not dumped to cancel the SOL move');
+  // the same game twice: once SOL jumps 20%, once it doesn't. Small coins swing hard every second, so one coin says
+  // nothing: across every live coin, the jump must not push prices in SOL down (on average) versus the twin.
+  const play = (jump) => {
+    const g = game(505), m = g.sys.macro; m.next = 1e9; BH.C.SOL_USD = m.sol;
+    run(g, 60);
+    const live = g.sim.tokens.filter((t) => t.dir && !t.dir.done && !t.dead && t.dir.mc0);
+    assert.ok(live.length > 3, 'directed coins are live');
+    if (jump) { m.sol = m.anchor = live[0].dir.sol0 * 1.2; BH.C.SOL_USD = m.sol; }
+    const p0 = live.map((t) => g.sim.price(t)); run(g, 5);
+    const r = live.map((t, i) => (t.dead ? 0 : Math.log(g.sim.price(t) / p0[i])));
+    return Math.exp(r.reduce((a, b) => a + b, 0) / r.length);
+  };
+  const base = play(false), jumped = play(true);
+  assert.ok(jumped > base * 0.9, 'the price in SOL was not dumped to cancel the SOL move: x' + jumped.toFixed(3) + ' vs x' + base.toFixed(3) + ' without the jump');
 });
 
 test('sol_price_survives_save_and_load', () => {

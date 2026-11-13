@@ -10,6 +10,8 @@ import { createLaptopScreen } from './screens.mjs';
 
 const BH = window.BH, C = BH.C, HUD = BH.HUD, Sound = BH.Sound;
 const params = new URLSearchParams(location.hash.slice(1));
+// frenzy=1: every coin is in a frenzy (screenshots of the wild charts)
+if (params.get('frenzy') && window.BH && BH.Director) BH.Director.FORCE_FRENZY = true;
 const SCENE = params.get('scene');   // test / screenshot scenes (see README)
 const log = (m) => { try { window.degen ? window.degen.log(m) : console.log(m); } catch (e) { /* ignore */ } };
 window.addEventListener('error', (e) => log('page error: ' + e.message + ' @' + (e.filename || '') + ':' + (e.lineno || '')));
