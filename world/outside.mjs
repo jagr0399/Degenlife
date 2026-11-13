@@ -5,6 +5,7 @@
 // each piece is also exported so the Street can lay them out itself. Everything animated pushes onto `anims`,
 // and setTime(d) (d: 0 night .. 1 day) relights it.
 import * as THREE from 'three';
+import { model } from './models.mjs';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { canvasTex } from './textures.mjs';
 import { walker } from './people.mjs';
@@ -62,7 +63,26 @@ export function skyline(g, { x0 = -80, x1 = 80, z = -40, depth = 30, seed = 3, m
 const CAR_COLS = [0xc81e1e, 0x1f6feb, 0xe5e7eb, 0x111418, 0x6b7280, 0x0f766e, 0xf4b23e, 0x7c3aed, 0x9ca3af, 0x14532d];
 const glassM = std({ color: 0x1b2633, roughness: 0.1, metalness: 0.6 }), tyreM = std({ color: 0x111111, roughness: 0.9 }), rimM = std({ color: 0xb8bcc2, metalness: 0.9, roughness: 0.3 });
 const headM = new THREE.MeshStandardMaterial({ color: 0xfff6dc, emissive: 0xfff2cc, emissiveIntensity: 0.4 }), tailM = new THREE.MeshStandardMaterial({ color: 0x7a0b0b, emissive: 0xff2020, emissiveIntensity: 0.4 });
+// real cars: sedans, an SUV, a pickup, the odd taxi or police car. Length along X, front at +X (like the old box car).
+const CAR_MODELS = [['pp-sedan-1', 0.26], ['pp-sedan-2', 0.24], ['pp-suv-1', 0.18], ['pp-pickup-truck-1', 0.12], ['pp-taxi-1', 0.14], ['pp-police-car-1', 0.06]];
 export function car(seed) {
+  const r = rng(seed * 131 + 17); let u = r(), id = CAR_MODELS[0][0];
+  for (const [mid, w] of CAR_MODELS) { if ((u -= w) <= 0) { id = mid; break; } }
+  const c = new THREE.Group(), wheels = []; c.userData.wheels = wheels; c.userData.len = 4.2;
+  const inner = model(id, 4.2, {
+    fallback: () => boxCar(seed),
+    onLoad: (m) => {
+      // spin only wheels whose pivot is their own centre (otherwise they'd orbit the car)
+      m.traverse((o) => { if (!o.isMesh || !/wheel/i.test(o.name)) return; o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox, cc = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3()); if (cc.length() < 0.15 * Math.max(sz.x, sz.y, sz.z)) { o.userData.axis = 'x'; wheels.push(o); } });
+      // head and tail lights at the ends (they glow at night, like the old ones)
+      for (const zz of [-0.55, 0.55]) { const hl = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.1, 0.28), headM); hl.position.set(zz, 0.62, 2.12); c.userData.lights = true; inner.add(hl); const tl = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.1, 0.28), tailM); tl.position.set(zz, 0.62, -2.12); inner.add(tl); }
+    },
+  });
+  inner.rotation.y = Math.PI / 2;   // the models are long along Z with the front at +Z; turn them so the front faces +X
+  c.add(inner);
+  return c;
+}
+function boxCar(seed) {
   const r = rng(seed * 97 + 5), c = new THREE.Group(), kind = r();
   const col = kind > 0.9 ? 0xf2c230 : CAR_COLS[Math.floor(r() * CAR_COLS.length)];   // ~1 in 10 is a cab
   const paint = std({ color: col, roughness: 0.3, metalness: 0.5 });
@@ -95,7 +115,7 @@ export function traffic(g, anims, { x0 = -80, x1 = 80, z = -6.5, y = 0, n = 10, 
     for (const k of cars) {
       k.c.position.x += k.dir * k.v * dt;
       if (k.dir > 0 && k.c.position.x > x1) k.c.position.x = x0; if (k.dir < 0 && k.c.position.x < x0) k.c.position.x = x1;
-      for (const w of k.c.userData.wheels) w.rotation.z -= k.v * dt / 0.34;
+      for (const w of k.c.userData.wheels) w.rotation[w.userData.axis || 'z'] -= k.v * dt / 0.34;
     }
   });
   return { setTime: (d) => { headM.emissiveIntensity = 0.4 + (1 - d) * 3; tailM.emissiveIntensity = 0.4 + (1 - d) * 2; } };
@@ -124,14 +144,31 @@ export function pedestrians(g, anims, { x0 = -40, x1 = 40, lanes = [-1.0, -2.0],
 // ---------------- park ----------------
 const leafM = [0x2f6b34, 0x3c7d3a, 0x2a5e30, 0x4a8a3f].map((c) => std({ color: c, roughness: 0.9, flatShading: true })), barkM = std({ color: 0x5a3e2b, roughness: 0.95 });
 const crownGeo = new THREE.IcosahedronGeometry(1, 1);
+const TREE_MODELS = [['pp-tree-1', 0.28], ['pp-birch-tree-1', 0.2], ['pp-pine-tree-1', 0.14], ['pp-oak-tree-1', 0.12], ['pp-oak-tree-2', 0.1], ['pp-maple-tree-1', 0.08], ['pp-bush-1', 0.08]];
 export function tree(seed, s = 1, sway = true) {
+  const r = rng(seed * 53 + 11); let u = r(), id = TREE_MODELS[0][0];
+  for (const [mid, w] of TREE_MODELS) { if ((u -= w) <= 0) { id = mid; break; } }
+  const bush = id === 'pp-bush-1', h = (bush ? 1.1 + r() * 0.5 : 4.2 + r() * 3.2) * s;
+  const t = new THREE.Group(), crown = new THREE.Group();
+  crown.userData.dyn = sway; t.userData.dyn = sway;   // (not merged: it sways, and the model arrives after the merge)
+  crown.add(model(id, h, { fit: 'h', fallback: () => treeBlob(seed, s) }));
+  crown.rotation.y = r() * Math.PI * 2;
+  t.add(crown); t.userData.crown = crown; t.userData.bush = bush;
+  return t;
+}
+function treeBlob(seed, s = 1) {
+  const sway = false;
   const r = rng(seed * 31 + 7), t = new THREE.Group(), h = (2.2 + r() * 1.6) * s;
   t.add(mesh(new THREE.CylinderGeometry(0.12 * s, 0.2 * s, h, 8), barkM, 0, h / 2, 0));
   const crown = new THREE.Group(); crown.position.y = h; crown.userData.dyn = sway; t.add(crown);
   for (let i = 0; i < 4; i++) { const c = new THREE.Mesh(crownGeo, leafM[Math.floor(r() * leafM.length)]); const k = (1.0 + r() * 0.7) * s; c.scale.set(k, k * 0.85, k); c.position.set((r() - 0.5) * 1.4 * s, (r() * 0.9) * s, (r() - 0.5) * 1.4 * s); c.castShadow = true; crown.add(c); }
   t.userData.crown = crown; return t;
 }
+// (treeBlob: the old procedural tree, used only if a model file is missing)
 export function bench() {
+  return model('pp-bench-1', 1.8, { fit: 'w', fallback: benchBox });
+}
+function benchBox() {
   const b = new THREE.Group(), wood = std({ color: 0x7a5634, roughness: 0.8 }), iron = std({ color: 0x222428, metalness: 0.6, roughness: 0.5 });
   for (let i = 0; i < 3; i++) b.add(mesh(new THREE.BoxGeometry(1.6, 0.04, 0.12), wood, 0, 0.45, -0.15 + i * 0.15));
   for (let i = 0; i < 2; i++) { const s = mesh(new THREE.BoxGeometry(1.6, 0.1, 0.03), wood, 0, 0.62 + i * 0.13, -0.24); s.rotation.x = -0.15; b.add(s); }
@@ -170,7 +207,7 @@ export function park(g, anims, { x = 0, z = -22, w = 60, d = 18, y = 0, seed = 2
     if (Math.abs(tz - z) < 1.6 || Math.abs(tx - x) < 1.6) continue;  // and the paths
     const t = tree(seed * 100 + i, 0.85 + r() * 0.5, sway); t.position.set(tx, y, tz); g.add(t); trees.push(t);
   }
-  if (sway) anims.push((dt, tm) => { for (let i = 0; i < trees.length; i++) { const c = trees[i].userData.crown; c.rotation.z = Math.sin(tm * 0.8 + i) * 0.02; c.rotation.x = Math.sin(tm * 0.6 + i * 1.7) * 0.015; } });
+  if (sway) anims.push((dt, tm) => { const gust = 0.6 + 0.4 * Math.sin(tm * 0.23) * Math.sin(tm * 0.07); for (let i = 0; i < trees.length; i++) { const tr = trees[i], c = tr.userData.crown, a = tr.userData.bush ? 0.3 : 1; c.rotation.z = (Math.sin(tm * 0.9 + i) * 0.035 + Math.sin(tm * 2.3 + i * 0.7) * 0.008) * gust * a; c.rotation.x = (Math.sin(tm * 0.7 + i * 1.7) * 0.025 + Math.sin(tm * 1.9 + i) * 0.006) * gust * a; } });
   for (let i = -2; i <= 2; i++) { if (!i) continue; const b = bench(); b.position.set(x + i * 7, y, z - 1.4); g.add(b); const b2 = bench(); b2.position.set(x + i * 7 + 2, y, z + 1.4); b2.rotation.y = Math.PI; g.add(b2); }
   for (let i = -3; i <= 3; i++) { const l = lampPost(lights); l.position.set(x + i * 8.5 + 1.5, y, z + 1.3); g.add(l); }
   return { trees, grass };

@@ -38,3 +38,29 @@
 - three.js r172 (MIT): vendor/three/LICENSE
 - Lucide icons (ISC), Inter (OFL), as in Bagholder v1.0
 - Coin images (assets/coins/c*.jpg): photos from Unsplash via Lorem Picsum (https://picsum.photos), free to use under the Unsplash License (https://unsplash.com/license). Picsum ids in assets/coins/ids.txt.
+
+## Street models (assets/models/pp-*)
+Low-poly cars, trees and street props by Quaternius, Kenney and Kay Lousberg, all CC0 (public domain), downloaded from Poly Pizza (poly.pizza) with tools/fetch-polypizza.js.
+- `pp-bench-1`: "Bench" by Quaternius, CC0, https://poly.pizza/m/jLxjFxFRpw
+- `pp-birch-tree-1`: "Birch Tree" by Quaternius, CC0, https://poly.pizza/m/k6cozoNfLH
+- `pp-bush-1`: "Bush" by Quaternius, CC0, https://poly.pizza/m/ooG6CkLyE8
+- `pp-bush-2`: "Hedge" by Quaternius, CC0, https://poly.pizza/m/df8uCl1YpK
+- `pp-fire-hydrant-1`: "Fire Hydrant" by Quaternius, CC0, https://poly.pizza/m/DKkMQbEklp
+- `pp-flower-1`: "Flowers" by Quaternius, CC0, https://poly.pizza/m/NBUxHir6FJ
+- `pp-maple-tree-1`: "Autumn Tree" by Quaternius, CC0, https://poly.pizza/m/2lRubrT6Na
+- `pp-oak-tree-1`: "Tree" by Quaternius, CC0, https://poly.pizza/m/qZtx0AHhcy
+- `pp-oak-tree-2`: "Tree" by Quaternius, CC0, https://poly.pizza/m/aVOxaHRPWe
+- `pp-palm-tree-1`: "Palm Tree" by Quaternius, CC0, https://poly.pizza/m/A6cKJYFsIb
+- `pp-pickup-truck-1`: "Pickup Truck" by Quaternius, CC0, https://poly.pizza/m/qn4grQgHm8
+- `pp-pine-tree-1`: "Tree Large" by Kenney, CC0, https://poly.pizza/m/ORCbG8dslS
+- `pp-pine-tree-2`: "Tree Large" by Isa Lousberg, CC0, https://poly.pizza/m/7QrrpRCYXd
+- `pp-police-car-1`: "Police Car" by Quaternius, CC0, https://poly.pizza/m/BwwnUrWGmV
+- `pp-sedan-1`: "Car" by Quaternius, CC0, https://poly.pizza/m/Cz6yDaUcM9
+- `pp-sedan-2`: "Car" by Quaternius, CC0, https://poly.pizza/m/unqqkULtRU
+- `pp-sedan-3`: "SUV" by Quaternius, CC0, https://poly.pizza/m/xsMtZhBkxL
+- `pp-street-light-1`: "Street Light" by Quaternius, CC0, https://poly.pizza/m/nFwrlcLvM5
+- `pp-suv-1`: "SUV" by Quaternius, CC0, https://poly.pizza/m/xsMtZhBkxL
+- `pp-taxi-1`: "Taxi" by Quaternius, CC0, https://poly.pizza/m/x43lOScTpN
+- `pp-traffic-light-1`: "Traffic light" by Kay Lousberg, CC0, https://poly.pizza/m/aYC3t5ymln
+- `pp-trash-can-1`: "Trashcan Small" by Quaternius, CC0, https://poly.pizza/m/i7HDuYDLkx
+- `pp-tree-1`: "Tree" by Quaternius, CC0, https://poly.pizza/m/i4QMw4L64D

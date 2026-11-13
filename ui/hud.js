@@ -137,6 +137,18 @@
           '<div><span>Rugged</span><b class="down">' + s.rugged + '</b></div>' +
         '</div>' +
         (s.biggestMover ? '<p class="fine">Biggest new coin while you slept: <b>$' + esc(s.biggestMover.ticker) + '</b>, peaked at $' + Math.round(s.biggestMover.athMc).toLocaleString() + ' market cap.</p>' : '') +
+        // the day you just had (game/progress.js report) and what happened while you slept
+        (s.report ? (() => { const R = s.report, x = (t) => (t ? '$' + esc(t.ticker) + ' ' + (t.mult >= 1 ? t.mult.toFixed(2) + 'x' : '−' + Math.round((1 - t.mult) * 100) + '%') : '–');
+          return '<h3 class="sum-h">' + icon('calendar-check', 'sm') + 'Day ' + (R.day || '') + ' report</h3><div class="sum">' +
+            '<div><span>Trades · closed</span><b>' + R.trades + ' · ' + R.closes + '</b></div>' +
+            '<div><span>Realized today</span><b class="' + (R.pnl >= 0 ? 'up' : 'down') + '">' + (R.pnl >= 0 ? '+' : '') + R.pnl.toFixed(3) + ' SOL</b></div>' +
+            '<div><span>Best trade</span><b class="up">' + x(R.best) + '</b></div>' +
+            '<div><span>Worst trade</span><b class="down">' + x(R.worst) + '</b></div>' +
+            '<div><span>Followers</span><b>' + (R.followers >= 0 ? '+' : '') + R.followers + '</b></div>' +
+            '<div><span>Contracts done</span><b>' + R.contracts + '</b></div>' +
+            (R.rank ? '<div><span>Weekly race</span><b>#' + R.rank + ' of 5</b></div>' : '') +
+            (R.mood ? '<div><span>Mood</span><b>' + (R.mood === 'heater' ? 'On a heater 🔥' : 'Revenge trading 😤') + '</b></div>' : '') + '</div>'; })() : '') +
+        (s.away && s.away.length ? '<h3 class="sum-h">' + icon('newspaper', 'sm') + 'While you slept</h3><ul class="sum-away">' + s.away.map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '') +
         '<div class="menu-btns"><button class="btn primary" data-a="ok">' + icon('sunrise', 'sm') + 'Get up</button></div>');
       bg.addEventListener('click', (e) => { if (e.target.closest('[data-a="ok"]')) { this.closeCard(); onDone(); } });
     },

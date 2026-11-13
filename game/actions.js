@@ -19,6 +19,7 @@
     sleep(game, hours) {
       hours = hours || C.SLEEP_HOURS;
       const sim = game.sim, p = game.player;
+      if (game.sys.progress) game.sys.progress.markAway();   // the day report and the news so far (for the wake-up summary)
       const st0 = Object.assign({}, sim.stats), nw0 = p.netWorth();
       const ids0 = new Set(sim.tokens.map((t) => t.id));
       Actions.fastForward(game, hours);
@@ -28,6 +29,7 @@
     async sleepAsync(game, hours, onProgress) {
       hours = hours || C.SLEEP_HOURS;
       const sim = game.sim, p = game.player;
+      if (game.sys.progress) game.sys.progress.markAway();   // the day report and the news so far (for the wake-up summary)
       const st0 = Object.assign({}, sim.stats), nw0 = p.netWorth();
       const ids0 = new Set(sim.tokens.map((t) => t.id));
       const seconds = hours * C.GAME_HOUR_S, steps = Math.ceil(seconds / 0.5), dt = seconds / steps;
@@ -56,6 +58,8 @@
         rugged: sim.stats.rugged - st0.rugged,
         migrated: sim.stats.migrated - st0.migrated,
         biggestMover: biggest ? { ticker: biggest.ticker, athMc: biggest.athMc } : null,
+        report: game.sys.progress ? game.sys.progress.sleepRep : null,          // the day you just had (taken when you lay down)
+        away: game.sys.progress ? game.sys.progress.awayList() : [],            // what happened while you slept
       };
     },
     eat(game) {

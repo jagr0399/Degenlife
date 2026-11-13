@@ -16,6 +16,7 @@
     { id: 'frenzy', label: 'Degen frenzy', hud: 'Frenzy', ic: 'flame', w: 8, fate: { pnd: 1.6, runner: 1.2 }, launch: 1.8, sol: [1, 4], text: 'Degen frenzy: launches every few seconds, everything pumps and dumps fast.' },
     { id: 'quiet', label: 'Quiet day', hud: 'Quiet day', ic: 'moon', w: 8, fate: { doa: 1.2, runner: 0.8 }, launch: 0.55, sol: [-1, 1], text: 'Quiet day: low volume. Good day to plan, bad day to ape.' },
     { id: 'whales', label: 'Whale day', hud: 'Whale day', ic: 'fish', w: 7, fate: { whale: 2.5, runner: 1.3 }, launch: 1, sol: [0, 2], text: 'Whale day: big wallets are hunting. Watch for 50+ SOL buys.' },
+    { id: 'con', label: 'Degen Con', hud: 'Degen Con', ic: 'party-popper', w: 0, fate: { runner: 1.6, pnd: 1.4 }, launch: 1.7, sol: [0, 3], text: 'The yearly degen convention: launches everywhere, KOLs on stage, and a trading contest (close a 2x today to win $500).' },
     { id: 'meta', label: 'Meta day', hud: 'Meta', ic: 'sparkles', w: 8, fate: { pnd: 1.2, runner: 1.3 }, launch: 1.2, sol: [0, 2], meta: true, text: '' },
   ];
   const EVENTS = ['kol_hour', 'flash_dip', 'viral', 'squeeze', 'forced_runner', 'dev_meta'];
@@ -42,6 +43,7 @@
       if (fin && fin.regime === 'bear' && (t.id === 'bear' || t.id === 'rugs' || t.id === 'quiet')) x *= 1.8;
       if (wd >= 5 && t.id === 'quiet') x *= 2;
       if (day === 1 && t.id !== 'normal') x = 0;   // the first day is always normal: the tutorial runs on it
+      if (day > 1 && day % 7 === 0) return t.id === 'con' ? 1 : 0;   // every 7th day is Degen Con (game/progress.js runs the contest)
       return x;
     });
     let tot = w.reduce((a, b) => a + b, 0), x = r() * tot, pick = TYPES[0];

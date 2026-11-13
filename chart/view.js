@@ -663,5 +663,11 @@
     ctx.setLineDash([]); ctx.lineWidth = 1;
   };
 
+  // jump to a moment (History → Replay): that time a third in from the right, paused off live
+  P.focusTime = function (t) {
+    if (!this.bars.length) return;
+    const i = BH.ChartModel.idxOfT(this.bars, t, this.L.iv), span = this.m.w / this.m.barSpacing;
+    this.m.rightIdx = i + span * 0.6; this.m.following = false; if (this.m.fit) this.m.fit(); this.draw();
+  };
   BH.ProChart = ProChart;
 })(window);

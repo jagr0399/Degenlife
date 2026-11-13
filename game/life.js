@@ -6,7 +6,7 @@
   function Life() { this.energy = 100; this.hunger = 20; this.sanity = 70; }
   const P = Life.prototype;
   Object.defineProperty(P, 'focus', {
-    get() { return clamp(Math.min(this.energy, 100 - this.hunger) + (this.sanity - 50) / 8 + (this.focusBonus || 0)); },
+    get() { return clamp(Math.min(this.energy, 100 - this.hunger) + (this.sanity - 50) / 8 + (this.focusBonus || 0) + (this.moodFocus || 0)); },   // (moodFocus: heater / revenge moods, game/progress.js)
   });
   // hours of game time passing; opts.seated (at a screen), opts.asleep
   P.tick = function (hours, opts) {
