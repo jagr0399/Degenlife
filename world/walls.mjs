@@ -7,7 +7,7 @@ function img(src) {
   if (!im) { im = imgCache[src] = new Image(); im.src = src; }
   return im.complete && im.naturalWidth ? im : null;
 }
-const pfp = (i) => img('assets/pfp/p' + String(((i || 0) % 144) + 1).padStart(2, '0') + '.svg');
+const pfp = (i) => img('assets/pfp/p' + String(((((i || 0) % 144) + 144) % 144) + 1).padStart(2, '0') + '.svg');
 const coin = (tk) => (tk && tk.img != null ? img('assets/coins/c' + tk.img + '.jpg') : null);
 function round(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
 function circleImg(ctx, im, x, y, r) { ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.clip(); if (im) ctx.drawImage(im, x - r, y - r, r * 2, r * 2); else { ctx.fillStyle = '#1a1e25'; ctx.fill(); } ctx.restore(); }

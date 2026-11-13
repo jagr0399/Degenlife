@@ -87,6 +87,9 @@ game.on('walletTrade', (ev) => {
 });
 game.on('menu', () => { if (mode === 'seated') standUp(); });
 game.on('day', (d) => game.emit('toast', { kind: 'info', text: 'Day ' + d + ' begins' }));
+// today's market mood: a banner across the top (and a toast in the terminal)
+const marketBanner = (info) => { if (!info || SCENE) return; HUD.banner(info.ic, 'Day ' + (info.day || game.clock.day) + ': ' + info.label, info.text, info.id === 'bear' || info.id === 'rugs' ? 'bad' : info.id === 'bull' || info.id === 'runners' ? 'good' : ''); if (BH.UI && BH.UI.toast && mode === 'seated') BH.UI.toast('info', info.label + ': ' + info.text); };
+game.on('marketday', marketBanner);
 game.on('news', (text) => { if (mode !== 'seated') HUD.toast('info', 'DNN: ' + text); });
 game.on('tutorial', (e) => HUD.tutorialToast(e.done, e.next));
 game.on('evicted', () => { if (game.meta.place === 'apartment') setTimeout(() => travel('bedroom'), 1200); });
@@ -142,13 +145,16 @@ function startGame(saveText, backupText, opts) {
   buildPlace(game.meta.place || 'bedroom');
   if (game.world && how === 'loaded') controller.place(game.world.x, game.world.z, game.world.yaw);
   else controller.place(room.spawn.pos.x, room.spawn.pos.z, room.spawn.yaw);
+  if (game.sys.days) setTimeout(() => marketBanner(Object.assign({ day: game.clock.day }, game.sys.days.info())), 2500);   // what kind of day it is, every time you start or load
   return how;
 }
 
 // ---- modes ----
 function enterWalk() {
   mode = 'walk';
-  HUD.closeCard(); HUD.showWorld(true); HUD.hint(!document.pointerLockElement);
+  HUD.closeCard(); HUD.showWorld(true);
+  // the "click to look around" hint only if the mouse really wasn't captured (closing the phone used to flash it every time)
+  HUD.hint(false); clearTimeout(enterWalk.t); enterWalk.t = setTimeout(() => { if (mode === 'walk' && !document.pointerLockElement) HUD.hint(true); }, 900);
   controller.state.enabled = true;
 }
 let justSat = false;

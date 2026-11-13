@@ -31,7 +31,16 @@
         el.addEventListener('click', (e) => {
           const ft = e.target.closest('[data-ft]'); if (ft) { this.tab = ft.dataset.ft; if (this.tab === 'notes') gm.sys.social.seeNotes(); this.render(true); return; }
           const fo = e.target.closest('[data-follow]'); if (fo) { const s2 = gm.sys.social; s2.following = s2.following || {}; s2.following[fo.dataset.follow] = !s2.following[fo.dataset.follow]; $('#xWho')._h = null; this.render(true); return; }
-          if (e.target.closest('[data-pickpfp]')) { const pk = $('#cwPick'); pk.hidden = !pk.hidden; if (!pk.hidden && !pk.innerHTML) pk.innerHTML = Array.from({ length: 144 }, (_, i) => '<button data-pfp="' + i + '"><img src="' + V.pfp(BASE, i) + '" loading="lazy"></button>').join(''); return; }
+          if (e.target.closest('[data-pickpfp]')) { const pk = $('#cwPick'); pk.hidden = !pk.hidden; if (!pk.hidden && !pk.innerHTML) pk.innerHTML = '<button class="cw-up" data-pfpup title="Use a picture from your PC">Upload</button>' + Array.from({ length: 144 }, (_, i) => '<button data-pfp="' + i + '"><img src="' + V.pfp(BASE, i) + '" loading="lazy"></button>').join(''); return; }
+          // your own picture: pick any image on your PC; it's cropped to a square and shrunk to 128 px (saved with the game)
+          if (e.target.closest('[data-pfpup]')) {
+            const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/png,image/jpeg,image/webp,image/gif';
+            inp.onchange = () => { const f = inp.files && inp.files[0]; if (!f) return; if (f.size > 15e6) { toast({ ok: false, reason: 'That image is too big (15 MB max)' }); return; }
+              const rd = new FileReader(); rd.onload = () => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = c.height = 128; const s = Math.min(im.width, im.height), cx = c.getContext('2d'); cx.imageSmoothingQuality = 'high'; cx.drawImage(im, (im.width - s) / 2, (im.height - s) / 2, s, s, 0, 0, 128, 128);
+                gm.meta.pfpData = c.toDataURL('image/png'); gm.meta.pfp = -1; $('#cwAv').src = gm.meta.pfpData; $('#cwPick').hidden = true; $('#cwMe')._h = null; $('#xFeed')._h = null; toast({ ok: true, text: 'Profile picture updated' }); this.render(true); };
+                im.onerror = () => toast({ ok: false, reason: 'Could not read that image' }); im.src = rd.result; }; rd.readAsDataURL(f); };
+            inp.click(); return;
+          }
           const pf = e.target.closest('[data-pfp]'); if (pf) { gm.meta.pfp = +pf.dataset.pfp; $('#cwAv').src = V.pfp(BASE, gm.meta.pfp); $('#cwPick').hidden = true; $('#cwMe')._h = null; toast({ ok: true, text: 'Profile picture updated' }); this.render(true); return; }
           V.feedClick(gm, e, () => { $('#xFeed')._h = null; this.render(true); });
         });

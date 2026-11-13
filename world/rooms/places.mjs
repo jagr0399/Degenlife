@@ -78,7 +78,7 @@ function rack(seed) {
   g.userData.leds = leds; return g;
 }
 const pfpTex = {};
-function pfpTexture(i) { const k = i % 144; if (!pfpTex[k]) { const t = new THREE.TextureLoader().load('assets/pfp/p' + String(k + 1).padStart(2, '0') + '.svg'); t.colorSpace = THREE.SRGBColorSpace; pfpTex[k] = t; } return pfpTex[k]; }
+function pfpTexture(i) { const k = (((i || 0) % 144) + 144) % 144; if (!pfpTex[k]) { const t = new THREE.TextureLoader().load('assets/pfp/p' + String(k + 1).padStart(2, '0') + '.svg'); t.colorSpace = THREE.SRGBColorSpace; pfpTex[k] = t; } return pfpTex[k]; }
 export function npc(pfpIdx, shirt) {
   const g = new THREE.Group();
   g.add(mesh(new THREE.CapsuleGeometry(0.2, 0.42, 6, 12), std({ color: shirt || 0x334155, roughness: 0.85 }), 0, 0.82, 0));

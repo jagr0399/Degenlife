@@ -42,7 +42,9 @@
   const contracts = {
     build(el) {
       el.innerHTML = '<div class="xp ct"><h1>' + icon('clipboard-check', 'lg') + 'Daily contracts <span class="dim" id="ctDay"></span></h1><div id="ctList"></div>' +
-        '<p class="note">Three new goals every game day. Finish one for its reward; finish all three for a bonus, and keep a streak going for bigger rewards. Unfinished contracts expire at midnight.</p></div>';
+        '<p class="note">Three new goals every game day. Finish one for its reward; finish all three for a bonus, and keep a streak going for bigger rewards. Unfinished contracts expire at midnight.</p>' +
+        '<h1 style="margin-top:24px">' + icon('trophy', 'lg') + 'Weekly trader race <span class="dim" id="rvWeek"></span></h1><div class="card" id="rvTable"></div>' +
+        '<p class="note">Four rival traders race you on profit every game week (7 days). Your score is how much your net worth changed this week. 1st place wins $1,000 and followers, 2nd $400, 3rd $150. Rivals post their wins, losses and trash talk on Chirp.</p></div>';
     },
     render() {
       const gm = game(); if (!gm || !gm.sys || !gm.sys.contracts) return;
@@ -54,6 +56,11 @@
         return '<div class="card ct-item ' + (x.done ? 'done' : '') + '"><div class="ct-row"><span class="ct-ic">' + icon(x.done ? 'check-circle-2' : 'circle', 'sm') + '</span><b>' + esc(x.text) + '</b><div class="spacer"></div><span class="ct-pay">' + pay(x) + '</span></div>' +
           '<div class="ct-prog"><i style="width:' + pct + '%"></i></div>' + (prog ? '<div class="note">' + prog + '</div>' : '') + '</div>';
       }).join('') || '<p class="note">New contracts arrive with the next day.</p>');
+      const rv = gm.sys.rivals; if (!rv) return;
+      const dayInWeek = ((gm.clock.day - 1) % 7) + 1;
+      setHTML($('#rvWeek'), 'Week ' + (rv.week || 1) + ' · day ' + dayInWeek + ' of 7');
+      const money = (n) => (n >= 0 ? '+$' : '−$') + Math.abs(n).toLocaleString();
+      setHTML($('#rvTable'), '<table class="tbl"><thead><tr><th class="l">#</th><th class="l">Trader</th><th>This week</th><th>Prize</th></tr></thead><tbody>' + rv.table().map((x, i) => '<tr class="' + (x.you ? 'rv-you' : '') + '"><td class="l">' + (i + 1) + '</td><td class="l"><b>' + esc(x.name) + '</b> <span class="dim">' + esc(x.handle) + '</span></td><td class="' + (x.pnl >= 0 ? 'up' : 'down') + '">' + money(x.pnl) + '</td><td>' + (['$1,000', '$400', '$150'][i] || '–') + '</td></tr>').join('') + '</tbody></table>' + (rv.hist.length ? '<div class="note">Last weeks: ' + rv.hist.slice(-4).reverse().map((h) => 'week ' + h.week + ' #' + h.place).join(' · ') + '</div>' : ''));
     },
   };
   BH.addApp('contracts', 'Contracts', 'clipboard-check', '#2bd67b', contracts);
@@ -76,7 +83,7 @@
   css.textContent = '.st-top{display:flex;align-items:center;gap:10px}.st-grid{display:grid;grid-template-columns:minmax(260px,1fr) 2fr;gap:14px;margin-bottom:14px}' +
     '.st-live{color:#ff4d5e;font-weight:800;margin-bottom:8px}.st-off{color:var(--muted,#8b93a1);font-weight:700;margin-bottom:8px}.st-bar{display:inline-block;width:110px;height:6px;border-radius:3px;background:#1d222a;overflow:hidden;vertical-align:middle}.st-bar i{display:block;height:100%;background:linear-gradient(90deg,#f4b23e,#ff4d5e)}' +
     '.st-lines{height:300px;overflow-y:auto;font-size:13px;line-height:1.55}.st-line b{color:#a77bff;font-weight:700}.st-line.win{color:#2bd67b}.st-line.loss,.st-line.rug{color:#ff4d5e}.st-line.tip,.st-line.sub{color:#f4b23e;font-weight:700}' +
-    '.ct-item{margin-bottom:10px}.ct-item.done{opacity:.65}.ct-row{display:flex;align-items:center;gap:8px}.ct-pay{color:#2bd67b;font-weight:700}.ct-prog{height:6px;border-radius:3px;background:#1d222a;overflow:hidden;margin:8px 0 2px}.ct-prog i{display:block;height:100%;background:#2bd67b}' +
+    '.ct-item{margin-bottom:10px}.ct-item.done{opacity:.65}.ct-row{display:flex;align-items:center;gap:8px}.ct-pay{color:#2bd67b;font-weight:700}.ct-prog{height:6px;border-radius:3px;background:#1d222a;overflow:hidden;margin:8px 0 2px}.ct-prog i{display:block;height:100%;background:#2bd67b}.rv-you td{background:rgba(244,178,62,.08)}.rv-you b{color:#f4b23e}' +
     '#appbar .ab-live{color:#ff4d5e !important;font-weight:800;gap:4px}@media (max-width:900px){.st-grid{grid-template-columns:1fr}}';
   document.head.appendChild(css);
 })(window);

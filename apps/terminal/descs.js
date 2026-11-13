@@ -32,7 +32,7 @@
     finance: 'Side gigs (time runs fast while you work), loans, prop firm challenges and airdrops.',
     shop: 'Buy furniture, gear and upgrades for your place. Better gear helps focus and sanity.',
     daytrade: 'Trade real-looking stocks with cash during market hours. Positions close at the bell.',
-    contracts: 'Daily contracts: small trading goals that refresh every day. Finish them for cash, gear and clout.',
+    contracts: 'Daily contracts (small goals that refresh every day) and the weekly trader race against four rival degens.',
     // safety & life
     toolkit: 'Stay safe: sniper bot settings, detective cases on rugs, a phishing inbox and cold storage for your SOL.',
     life: 'Challenges, group chat, pets, your journal and the museum of your best and worst trades.',

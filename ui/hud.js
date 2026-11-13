@@ -58,6 +58,14 @@
       this.$('hCross').classList.toggle('on', !!text);
     },
     hint(show) { this.$('hHint').classList.toggle('hide', !show); },
+    // a big banner at the top for a few seconds: today's market mood (game/days.js)
+    banner(ic, title, text, kind) {
+      let b = document.getElementById('hBanner');
+      if (!b) { b = document.createElement('div'); b.id = 'hBanner'; b.className = 'mbanner'; this.el.appendChild(b); }
+      b.className = 'mbanner show ' + (kind || '');
+      b.innerHTML = '<span class="mb-ic">' + (BH.icon ? BH.icon(ic || 'sun') : '') + '</span><div><b>' + esc(title) + '</b><span>' + esc(text) + '</span></div>';
+      clearTimeout(this._bt); this._bt = setTimeout(() => b.classList.remove('show'), 7000);
+    },
     toast(kind, text) {
       const host = this.$('hToasts');
       const ic = { buy: 'circle-check', sell: 'coins', fail: 'circle-x', rug: 'skull', call: 'megaphone', bad: 'triangle-alert', error: 'octagon-alert', save: 'save' }[kind] || 'info';

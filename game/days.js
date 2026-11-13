@@ -61,6 +61,7 @@
     if (pick.id === 'bear' && gm.sim) for (const tk of gm.sim.tokens) if (!tk.dead) tk.hype *= 0.75;
     if (gm.sys.world && day > 1) gm.sys.world.headline('Day ' + day + ': ' + info.text);
     if (day > 1) gm.emit('toast', { kind: pick.id === 'bear' || pick.id === 'rugs' ? 'bad' : 'info', text: info.label + ': ' + info.text });
+    gm.emit('marketday', Object.assign({ day }, info));   // the morning banner (world/main.mjs)
   };
 
   P.fire = function (ev) {

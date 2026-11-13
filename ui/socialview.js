@@ -5,7 +5,9 @@
   'use strict';
   const BH = g.BH = g.BH || {};
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const pfp = (base, i) => base + 'pfp/p' + String(((i || 0) % 144) + 1).padStart(2, '0') + '.svg';
+  // -1 = your own uploaded picture (saved with the game as meta.pfpData)
+  const custom = () => { const gm = BH.UI && BH.UI.game; return (gm && gm.meta && gm.meta.pfpData) || null; };
+  const pfp = (base, i) => (i === -1 && custom() ? custom() : base + 'pfp/p' + String(((i > 0 ? i : 0) % 144) + 1).padStart(2, '0') + '.svg');
   const coinImg = (base, tk) => tk && tk.realImg ? tk.realImg : tk && tk.img != null ? base + 'coins/c' + tk.img + '.jpg' : '';
   const kfmt = (n) => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : String(Math.round(n));
   const usd = (n) => BH.fmt ? BH.fmt.usd(n) : '$' + kfmt(n);

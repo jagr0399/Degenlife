@@ -261,11 +261,21 @@
         if (k === 'buy') P[UI.settings.unit === 'usd' ? 'usd' : 'buys'][+i] = v; else if (k === 'sell') P.sells[+i] = v; else P[k] = v;
         UI.settings.slippage = P.slip / 100; UI.settings.priority = P.prio; UI.saveSettings();
       });
+      // Enter saves the box and moves to the next one; Esc leaves edit mode
+      el.addEventListener('keydown', (e) => {
+        if (!e.target.dataset || !e.target.dataset.ed) return;
+        e.stopPropagation();
+        if (e.key === 'Enter') { e.preventDefault(); e.target.dispatchEvent(new Event('change', { bubbles: true })); const ins = [...el.querySelectorAll('input[data-ed]')], i = ins.indexOf(e.target); if (ins[i + 1]) { ins[i + 1].focus(); ins[i + 1].select(); } else { e.target.blur(); el.classList.remove('editing'); el._h = null; UI.renderInstant(); } }
+        if (e.key === 'Escape') { e.preventDefault(); e.target.blur(); el.classList.remove('editing'); el._h = null; UI.renderInstant(); }
+      });
+      el.addEventListener('focusout', () => { setTimeout(() => { if (!el.contains(document.activeElement)) { el._h = null; UI.renderInstant(); } }, 0); });
     }
     el.hidden = false; UI.renderInstant();
   };
   UI.renderInstant = function () {
     const el = $('#instant'); if (!el || el.hidden) return;
+    // editing presets: don't redraw while you're typing in one of the boxes (a redraw used to wipe what you typed)
+    if (el.classList.contains('editing') && document.activeElement && el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
     const I = icfg(), P = I.presets[I.p], usd = UI.settings.unit === 'usd', gm = game(), tk = gm.sim.byId.get(UI.tokenId), editing = el.classList.contains('editing');
     const pos = tk && gm.player.pos.get(tk.id);
     const amts = usd ? P.usd : P.buys;
