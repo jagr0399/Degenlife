@@ -326,6 +326,8 @@ function sleep() {
 function card(fn) { if (SCENE === 'look') return; mode = 'card'; controller.unlock(); Sound.walking(false); fn(); }
 function maybeStory() {
   const st = game.sys.story; if (!st || mode !== 'walk') return false;
+  // game over (evicted, banned, broke): that life is done, the only way on is a new save
+  if (game.meta && game.meta.over && HUD.gameOverCard) { const o = game.meta.over; Sound.play('error', { gain: 0.8 }); card(() => HUD.gameOverCard(o, async (a) => { if (a === 'menu') { HUD.closeCard && HUD.closeCard(); return mainMenu(); } startGame(null); enterWalk(); controller.lock(); await save(true, true); HUD.toast('info', 'A new life. Rent is $' + C.RENT_BEDROOM + ', due on day ' + game.bills.rentDueDay + '.'); })); return true; }
   if (st.pendingAct) { const a = BH.Story.ACTS[st.pendingAct - 1]; st.pendingAct = null; Sound.play('confirm', { gain: 0.7 }); card(() => HUD.actCard(a, () => { enterWalk(); controller.lock(); })); return true; }
   const sc = st.next(); if (!sc) return false;
   Sound.play(sc.who === 'pruitt' ? 'door' : 'info');
@@ -445,7 +447,7 @@ Sound.init({ music: +settings.volMusic, sfx: +settings.volSfx, amb: +settings.vo
 if (BH.RealCoins) { BH.RealCoins.on = settings.realCoins !== '0' && (!SCENE || params.get('real') === '1'); BH.RealCoins.game = () => game; BH.RealCoins.start(); }
 fetch('assets/templates/templates.json').then((r) => (r.ok ? r.json() : null)).then((t) => { if (t && BH.Director) BH.Director.setTemplates(t); }).catch(() => {});
 Sound.radioOn = settings.radio !== '0';
-const VIEWS = { door: { pos: [1.4, 1.62, 1.35], look: [-0.4, 0.9, -1.2] }, desk: { pos: [0.2, 1.55, 0.2], look: [1.3, 0.6, -1.55] } };
+const VIEWS = { door: { pos: [1.4, 1.62, 1.35], look: [-0.4, 0.9, -1.2] }, couch: { pos: [2.2, 1.75, 0.0], look: [-1.0, 0.5, 2.2] }, desk: { pos: [0.2, 1.55, 0.2], look: [1.3, 0.6, -1.55] } };
 if (!SCENE || SCENE === 'menu') { game.newGame(7); buildPlace('bedroom'); room.setTime(22, R.scene); controller.place(1.4, 1.35, 0.7); mainMenu(); }
 else {
   game.newGame(+(params.get('seed') || 42));
@@ -463,22 +465,26 @@ else {
   if (params.get('track')) { const tk = game.sim.tokens.filter((t) => (t.bubbles || []).length > 5).pop(); if (tk) for (const b of tk.bubbles.slice(-6)) game.sys.tracker.track(b.addr, { name: b.name }); }
   if (['seated', 'token', 'bank', 'daytrade', 'chirp', 'scope', 'shop', 'dev', 'firm', 'pad', 'desktop', 'discover', 'trackers', 'perps', 'predict', 'rewards', 'news', 'radio', 'trencher', 'hustle', 'clout', 'toolkit', 'finance', 'empire', 'life', 'launch', 'stream', 'contracts', 'skills', 'history', 'bots', 'inspector', 'hotkeys'].includes(SCENE)) {
     for (let i = 0; i < +(params.get('run') || 0) * 4; i++) { game.sim.step(0.25); game.player.tick(); }   // run=N: fast-forward N seconds (busy charts for screenshots)
+    if (params.get('j7') && game.sys.j7) { game.sys.j7.meme(params.get('j7') === '1' ? 'elon' : params.get('j7')); for (let i = 0; i < +(params.get('j7s') || 12) * 4; i++) { game.sim.step(0.25); game.player.tick(); } }   // j7=1|toly|alon: a mover tweets a meme, then j7s seconds pass
     let megaTk = null;
     if (params.get('mega')) { const d = game.sys.director; d.force = 'mega'; megaTk = game.sim.launch(); d.force = null; for (let i = 0; i < +params.get('mega') * 4; i++) { game.sim.step(0.25); game.player.tick(); } }
     // arch=A..H&secs=N: launch a coin playing that launch archetype and run it N seconds (screenshots)
     if (params.get('arch') && BH.Archetypes) { const id = params.get('arch'), d = game.sys.director, P = BH.Director.prototype, o = P.template; P.template = function (t, r) { return BH.Archetypes.build(id, r); }; d.force = { A: 'doa', B: 'pnd', C: 'runner', D: 'runner', F: 'rug', G: 'runner', H: 'rug' }[id]; megaTk = game.sim.launch(); d.force = null; P.template = o; for (let i = 0; i < +(params.get('secs') || 300) * 4; i++) { game.sim.step(0.25); game.player.tick(); } }
     if (params.get('legend') && !megaTk) { const d = game.sys.director; d.force = 'legend'; megaTk = game.sim.launch(); d.force = null; for (let i = 0; i < +params.get('legend') * 4; i++) { game.sim.step(0.25); game.player.tick(); } }   // legend=N: a legend runner, N s after launch
+    // mayhem=1: a fresh Pump coin with Mayhem on, shown 25 s in (screenshots)
+    if (params.get('mayhem') && game.sys.mayhem && !megaTk) { { const pump = (BH.PADS || []).find((p) => p.id === 'pumplab'), op = game.sim.pickPad; if (pump) game.sim.pickPad = () => pump; try { megaTk = game.sim.launch(); } finally { if (op) game.sim.pickPad = op; else delete game.sim.pickPad; } } const moonShot = params.get('mayhem') === 'moon'; game.sys.mayhem.enable(megaTk, { start: 0.5, stay: 300, moon: moonShot || undefined }); if (moonShot) { megaTk.mayhem.moonAt = 8; if (megaTk.fate2 === "rug") megaTk.fate2 = "pnd"; } for (let i = 0; i < (moonShot ? 110 : 25) * 4; i++) { game.sim.step(0.25); game.player.tick(); } }
     const wantFate = params.get('fate');   // fate=runner|rug|pnd|whale|doa: the chart shot shows a coin of that kind
     const live = game.sim.tokens.filter((t) => !t.dead);
     const vampTk = params.get('vamp') ? live.filter((t) => t.vampOf && !t.fakeLiq).sort((a, b) => b.candles.length - a.candles.length)[0] || live.find((t) => t.vampOf) : null;
     const divTk = params.get('div') ? live.filter((t) => t.rewards === 'holders').sort((a, b) => (b.pair === 'USD1') - (a.pair === 'USD1') || b.candles.length - a.candles.length)[0] : null;
     const tk = vampTk || divTk || megaTk || (wantFate && live.filter((t) => t.fate2 === wantFate).sort((a, b) => b.candles.length - a.candles.length)[0]) || (SCENE === 'token' ? live.slice().sort((a, b) => (b.bubbles || []).length - (a.bubbles || []).length)[0] : live.slice(-1)[0]);   // the chart shot uses the busiest coin
-    if (tk && (params.get('legend') || params.get('arch') || wantFate || vampTk || divTk)) sceneCoin = tk.id;
+    if (tk && (params.get('mayhem') || params.get('legend') || params.get('arch') || wantFate || vampTk || divTk)) sceneCoin = tk.id;
     if (tk) { game.player.buy(tk.id, 0.8); for (let i = 0; i < 8; i++) { game.sim.step(0.25); game.player.tick(); } }
     if (tk && params.get('sellall')) { for (let i = 0; i < 40; i++) { game.sim.step(0.25); game.player.tick(); } game.player.buy(tk.id, 0.6, { slippage: 0.9 }); for (let i = 0; i < 160; i++) { game.sim.step(0.25); game.player.tick(); } setTimeout(() => { if (BH.UI && BH.UI.openToken) BH.UI.openToken(tk.id); setTimeout(() => { game.player.sell(tk.id, 1, { slippage: 0.9 }); }, 1500); }, 2500); }
     if (tk && params.get('sellhalf')) { for (let i = 0; i < 80; i++) { game.sim.step(0.25); game.player.tick(); } game.player.buy(tk.id, 0.5, { slippage: 0.9 }); for (let i = 0; i < 60; i++) { game.sim.step(0.25); game.player.tick(); } game.player.buy(tk.id, 0.4, { slippage: 0.9 }); for (let i = 0; i < 60; i++) { game.sim.step(0.25); game.player.tick(); } game.player.sell(tk.id, 0.5, { slippage: 0.9 }); for (let i = 0; i < 12; i++) { game.sim.step(0.25); game.player.tick(); } }
     if (tk && params.get('sellhalf')) setTimeout(() => { if (BH.UI && BH.UI.openToken) BH.UI.openToken(tk.id); }, 2800);
     if (tk && params.get('call')) { game.sys.trencher.call(tk.id, 'chart looks clean here, small bag'); for (let i = 0; i < 240; i++) { game.sim.step(0.25); game.player.tick(); } setTimeout(() => { if (BH.UI && BH.UI.openToken) BH.UI.openToken(tk.id); }, 2800); }
+    if (params.get('flex') && game.sys.social && game.sys.social.flex && tk) { game.sys.trencher.followers = 2400; game.sys.social.flex({ ticker: tk.ticker, coin: tk.id, pnl: 1.84, invested: 0.8, mult: 3.3, open: true }, 'took this one off the dev wallet. ez'); for (let i = 0; i < 60 * 4; i++) { game.sim.step(0.25); game.player.tick(); } }   // flex=1 (screenshots)
     if (params.get('celeb') && game.sys.celebs) { const c = BH.Celebs.CELEBS[0]; game.sys.celebs.tweet(c, c.tweets[2]); for (let i = 0; i < 100; i++) { game.sim.step(0.25); game.player.tick(); } }
     if (params.get('disp')) setTimeout(() => { const c = BH.UI && BH.UI.chart; if (c) { c.menuOpen = true; c.renderMenu(); } }, 3500);
     if (params.get('post')) { const so = game.sys.social; game.sys.trencher.followers = 4200; so.compose('gm. the trenches are quiet today, which usually means something is about to send'); if (tk) so.compose('$' + tk.ticker + ' chart looks clean, dev wallet tiny. small bag', tk.id); for (let i = 0; i < 400; i++) { game.sim.step(0.25); game.player.tick(); } const other = so.posts.filter((x) => !x.mine && x.acc !== 'you').slice(-3); if (other[0]) so.like(other[0].id); if (other[1]) so.repost(other[1].id); }
@@ -521,7 +527,7 @@ else {
       }, 8000);
     }, 4000);
   }
-  if (SCENE === 'story') { const st = game.sys.story; game.afterTime(); if (params.get('id')) st.queue = [params.get('id')]; if (params.get('act')) { st.pendingAct = +params.get('act'); } st.lastSceneHour = -99; maybeStory(); }
+  if (SCENE === 'story') { const st = game.sys.story; game.afterTime(); if (params.get('id')) st.queue = [params.get('id')]; if (params.get('act')) { st.pendingAct = +params.get('act'); } st.lastSceneHour = -99; if (st.sagaInit) { st.sagaInit(); if (params.get('sp')) { const d = BH.Story.SET[params.get('sp')]; if (d) { st.act = d.act; st.queue = []; if (params.get('sp') === 'unmask') for (let i = 0; i < 4; i++) st.addClue('scene'); st.spStart(params.get('sp')); } } if (params.get('over')) st.gameOver(params.get('over')); } maybeStory(); }
   if (SCENE === 'sleep') { mode = 'sleeping'; HUD.sleepSummary(BH.Actions.sleep(game, 8), () => {}); }
 }
 window.__world = { R, get room() { return room; }, game, controller, THREE, get mode() { return mode; }, travel };

@@ -184,3 +184,51 @@
 #instant .in-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
 #instant .in-grid input { width: 100% !important; min-width: 0 !important; box-sizing: border-box; padding: 0 4px; }
 #instant .in-set input { min-width: 0; box-sizing: border-box; }
+
+/* Callouts app (apps/terminal/callouts-ui.js) */
+.xp.co .co-main { align-items: start; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); }
+.co-picks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+.co-pick { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--bg-2); color: var(--text); cursor: pointer; position: relative; min-width: 0; }
+.co-pick img { position: absolute; right: 6px; top: 6px; width: 18px; height: 18px; border-radius: 4px; object-fit: cover; }
+.co-pick small { color: var(--text-3); font-size: 10.5px; }
+.co-pick.on { border-color: #ff5fa2; box-shadow: 0 0 0 1px #ff5fa2 inset; }
+.co-buyrow { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+.co-cd { height: 4px; border-radius: 2px; background: var(--bg-2); overflow: hidden; margin-top: 6px; }
+.co-cd i { display: block; height: 100%; background: #ff5fa2; }
+.co-tabs { margin-bottom: 10px; }
+.co-card { border: 1px solid var(--line-2); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: #0b0d12; }
+.co-card.you { border-color: rgba(255, 95, 162, .45); }
+.co-card.live { box-shadow: inset 3px 0 0 #ff5fa2; }
+.co-top { display: flex; align-items: center; gap: 8px; }
+.co-av { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--bg-2); }
+.co-who { display: flex; flex-direction: column; min-width: 0; }
+.co-who span { font-size: 11px; }
+.co-pill { font: 700 10px Inter, sans-serif; padding: 2px 6px; border-radius: 4px; background: var(--bg-2); color: var(--text-3); display: inline-flex; align-items: center; gap: 3px; }
+.co-pill.live { background: rgba(255, 95, 162, .15); color: #ff5fa2; }
+.co-pill.hit { background: rgba(43, 214, 123, .15); color: var(--buy); }
+.co-thesis { margin: 6px 0 4px 40px; }
+.co-coin { display: flex; align-items: center; gap: 14px; margin: 6px 0 0 40px; padding: 7px 10px; border-radius: 8px; background: var(--bg-2); cursor: pointer; flex-wrap: wrap; }
+.co-ci { width: 22px; height: 22px; border-radius: 5px; object-fit: cover; }
+.co-k { display: flex; flex-direction: column; line-height: 1.2; }
+.co-k small { color: var(--text-3); font-size: 10px; }
+.co-foot { display: flex; gap: 14px; margin: 7px 0 0 40px; font-size: 11.5px; color: var(--text-2); flex-wrap: wrap; align-items: center; }
+.co-foot span { display: inline-flex; align-items: center; gap: 4px; }
+.co-per { margin-bottom: 8px; }
+.co-tab { width: 100%; border-collapse: collapse; font-size: 12px; }
+.co-tab th { color: var(--text-3); font-weight: 600; font-size: 11px; padding: 6px; text-align: right; }
+.co-tab td { padding: 6px; text-align: right; border-top: 1px solid var(--line); }
+.co-tab .l { text-align: left; }
+.co-tab tr.you td { background: rgba(255, 95, 162, .07); }
+.co-mini { width: 20px; height: 20px; border-radius: 50%; vertical-align: middle; margin-right: 6px; object-fit: cover; }
+.j7-callout { display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; padding: 2px 7px; border-radius: 5px; background: rgba(255, 95, 162, .13); color: #ff7ab4; font: 700 10.5px Inter, sans-serif; }
+.co-buyrow .seg button { white-space: nowrap; padding: 0 9px; }
+
+/* Mayhem coins (game/mayhem.js) */
+.axc.mh { color: #ff7a45; border-color: rgba(255, 122, 69, .45); }
+.axc.mh.live { background: rgba(255, 122, 69, .15); animation: mhPulse 1.2s ease-in-out infinite; }
+.tp-bdg.mh { background: rgba(255, 122, 69, .14); color: #ff8a5c; display: inline-flex; align-items: center; gap: 3px; }
+.tp-bdg.mh.live { animation: mhPulse 1.2s ease-in-out infinite; }
+@keyframes mhPulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .axc.mh.live, .tp-bdg.mh.live { animation: none; } }
+.dp-mh.on { border-color: #ff7a45; color: #ff8a5c; }
+.dp-mh:disabled { opacity: .4; cursor: not-allowed; }

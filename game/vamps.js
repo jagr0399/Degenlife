@@ -58,7 +58,7 @@
   // the name race: rename 1-4 young coins (launched in the last ~90 s, nobody you know holds them) to the runner's name
   P.race = function (og) {
     const sim = this.game.sim, r = sim.r, pl = this.game.player;
-    const young = sim.tokens.filter((t) => t !== og && !t.dead && !t.isPlayer && !t.vampOf && !t.betaOf && t.fate2 !== 'mega' && og.born - t.born >= 0 && og.born - t.born < 90 && !(pl && pl.pos && pl.pos.has(t.id)) && !(t.trades || []).some((x) => x.you));
+    const young = sim.tokens.filter((t) => t !== og && !t.j7 && !t.dead && !t.isPlayer && !t.vampOf && !t.betaOf && t.fate2 !== 'mega' && og.born - t.born >= 0 && og.born - t.born < 90 && !(pl && pl.pos && pl.pos.has(t.id)) && !(t.trades || []).some((x) => x.you));
     let n = Math.min(young.length, r.int(1, 4));
     while (n-- > 0) {
       const t = young.splice(r.int(0, young.length - 1), 1)[0];

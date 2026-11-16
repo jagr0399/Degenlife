@@ -13,7 +13,7 @@
   };
   // [title, file, station]. More tracks come from assets/audio/music/stations.json ({station, title, author, file}).
   const MUSIC = [['Lofi Loop', 'music/lofi-loop.ogg', 'Lofi'], ['Chill Lofi', 'music/chill-lofi.ogg', 'Lofi'], ['Lofi Again', 'music/lofi-again.ogg', 'Lofi'], ['Chill (Loopable)', 'music/chill-loopable.mp3', 'Lofi']];
-  const STATION_ORDER = ['Lofi', 'Synthwave', 'Jazz', 'Chiptune', 'Ambient'];
+  const STATION_ORDER = ['My Music', 'Lofi', 'Synthwave', 'Jazz', 'Chiptune', 'Ambient'];
   const ls = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } };
 
   const S = {
@@ -29,10 +29,16 @@
       el.volume = this.vol.music;
       for (const [k, f] of Object.entries(FILES)) this.load(k, f);
       fetch(A + 'music/stations.json').then((r) => (r.ok ? r.json() : [])).then((list) => { for (const t of list || []) if (t && t.file && !MUSIC.some((m) => m[1] === t.file)) MUSIC.push([t.title, t.file, t.station || 'Lofi', t.author || '']); if (!this.inStation().length) this.station = 'Lofi'; }).catch(() => {});
+      this.loadMyMusic();
       this.ready = true;
     },
     async load(k, f) {
       try { const r = await fetch(A + f); if (!r.ok) return; const ab = await r.arrayBuffer(); this.buf[k] = await this.ctx.decodeAudioData(ab); } catch (e) { /* missing or undecodable: skip */ }
+    },
+    // My Music: audio files from Music\Degen Life (desktop app only), as their own station
+    loadMyMusic() {
+      const api = g.degen; if (!api || !api.myMusic) return Promise.resolve(0);
+      return api.myMusic().then((files) => { let n = 0; for (const f of files || []) { const file = '../../mymusic/' + f.split('/').map(encodeURIComponent).join('/'); if (MUSIC.some((x) => x[1] === file)) continue; MUSIC.push([f.split('/').pop().replace(/\.[^.]+$/, ''), file, 'My Music', 'your file']); n++; } return n; }).catch(() => 0);
     },
     resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); if (this.radioOn && this.musicEl && this.musicEl.paused) this.playTrack(); },
     play(k, opts) {

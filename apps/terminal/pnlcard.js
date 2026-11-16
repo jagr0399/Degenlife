@@ -29,12 +29,15 @@
       '<button class="if-c pnl ' + (up ? 'up' : 'down') + '" data-i="funit" title="Profit or loss, realized + unrealized">' + mark + (up ? '+' : '−') + num(Math.abs(S.total)) + '<span>(' + (up ? '+' : '−') + Math.abs(pct).toFixed(pct !== 0 && Math.abs(pct) < 10 ? 1 : 0) + '%)</span></button>';
     if (foot && foot._h !== html) { foot._h = html; foot.className = 'in-foot axf'; foot.innerHTML = html; }
     // your callout on this coin: how many wallets bought after it, how much SOL, and how the coin has done since
-    const tr = gm.sys.trencher, call = tr && tk && tr.calls.slice().reverse().find((c) => c.coin === tk.id && gm.sim.t - c.t < 600);
+    const tr = gm.sys.trencher, call = tr && tk && tr.calls.slice().reverse().find((c) => c.coin === tk.id && gm.sim.t - c.t < (c.v2 ? 240 : 600));
     let box = el.querySelector('.in-call');
     if (!call) { if (box) box.remove(); return; }
     if (!box) { box = document.createElement('div'); box.className = 'in-call'; if (foot) foot.after(box); else el.appendChild(box); }
-    const since = (gm.sim.mc(tk) / call.mcAt - 1) * 100, left = Math.max(0, 600 - (gm.sim.t - call.t));
-    const ch = '<span class="ic-ic">📣</span><span>Your call at <b>' + BH.fmt.usd(call.mcAt) + '</b></span><span class="ic-n" title="Different wallets that bought after your call"><b>' + (call.buyers || 0) + '</b> buyers</span><span title="SOL bought after your call"><b>' + (call.buySol || 0).toFixed(1) + '</b> SOL</span><span class="' + (since >= 0 ? 'up' : 'down') + '">' + (since >= 0 ? '+' : '') + since.toFixed(0) + '%</span><i class="ic-bar" style="width:' + (left / 600 * 100).toFixed(1) + '%" title="Counting for ' + Math.ceil(left) + ' more seconds"></i>';
+    const xNow = gm.sim.mc(tk) / call.mcAt, peak = call.peak / call.mcAt, age = gm.sim.t - call.t, win = call.v2 ? BH.Trencher.CALLOUT.H4 : 600, left = Math.max(0, win - age);
+    const fp = call.v2 ? (call.pnl4h != null ? call.pnl4h : call.pnl1h != null ? call.pnl1h : tr.folPnl(call)) : null;
+    const ch = '<span class="ic-ic">📣</span><span>Your callout at <b>' + BH.fmt.usd(call.mcAt) + '</b></span><span class="' + (xNow >= 1 ? 'up' : 'down') + '"><b>' + xNow.toFixed(2) + 'x</b></span><span title="Peak multiple since your callout">peak <b>' + peak.toFixed(2) + 'x</b></span>' +
+      (call.v2 ? '<span title="Followers notified"><b>' + Math.round(call.notified || 0).toLocaleString() + '</b> notified</span><span title="Your followers\' profit (realized + held)">followers <b class="' + (fp >= 0 ? 'up' : 'down') + '">' + (fp >= 0 ? '+' : '') + fp.toFixed(2) + ' SOL</b></span>' : '<span class="ic-n"><b>' + (call.buyers || 0) + '</b> buyers</span>') +
+      '<i class="ic-bar" style="width:' + (left / win * 100).toFixed(1) + '%" title="Tracked for ' + Math.ceil(left) + ' more seconds"></i>';
     if (box._h !== ch) { box._h = ch; box.innerHTML = ch; }
   };
   document.addEventListener('click', (e) => {

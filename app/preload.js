@@ -8,5 +8,7 @@ contextBridge.exposeInMainWorld('degen', {
   fetchJson: (url) => ipcRenderer.invoke('degen:fetchJson', url),
   log: (msg) => ipcRenderer.send('degen:log', String(msg)),
   quit: () => ipcRenderer.send('degen:quit'),
+  myMusic: () => ipcRenderer.invoke('degen:myMusic'),
+  openMyMusic: () => ipcRenderer.invoke('degen:openMyMusic'),
   desktop: true,
 });

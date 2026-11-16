@@ -8,7 +8,7 @@
   const game = () => UI.game;
   const SUITES = [
     { id: 'trade', name: 'Trade', ic: 'candlestick-chart', col: '#f4b23e', apps: ['terminal', 'scope'], desc: 'The trading terminal (Discover, Pulse, Trackers, Perps, Predictions, Portfolio) and Scope.' },
-    { id: 'social', name: 'Social', ic: 'message-circle', col: '#4aa8ff', apps: ['chirp', 'clout', 'trencher'], desc: 'Chirp timeline, your Clout (copiers, leaderboard, alpha group, deals, Spaces) and the Trencher caller career.' },
+    { id: 'social', name: 'Social', ic: 'message-circle', col: '#4aa8ff', apps: ['chirp', 'clout', 'trencher'], desc: 'J7 feed, your Clout (copiers, leaderboard, alpha group, deals, Spaces) and Callouts (call coins, leaderboard, daily rewards).' },
     { id: 'business', name: 'Business', ic: 'briefcase', col: '#a77bff', apps: ['hustle', 'dev', 'firm', 'pad', 'empire'], desc: 'Meme Lab and crew, Coin Factory, your trading Firm, LaunchLab and side businesses.' },
     { id: 'money', name: 'Money', ic: 'landmark', col: '#2bd67b', apps: ['bank', 'finance', 'shop'], desc: 'Bank, Finance (gigs, loans, prop firm, airdrops) and the Shop.' },
     { id: 'safety', name: 'Safety', ic: 'shield', col: '#3fd2c7', apps: ['toolkit'], desc: 'Sniper bot, detective cases, phishing inbox, cold storage.' },

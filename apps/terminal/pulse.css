@@ -59,3 +59,11 @@
 /* calm everything else that used to flash */
 .row, .ev, .tbl tr.new td { animation: none !important; }
 .ax-pic { display: grid; place-items: center; } .ax-pic img { position: absolute; inset: 0; } .ax-letter { font: 900 30px Inter, sans-serif; color: #6b7380; }
+
+/* Protocols filter (Nov 16) */
+.fprot { margin-bottom: 10px; padding: 10px; border: 1px solid var(--line-2); border-radius: 10px; background: #0b0d12; }
+.fprot-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.fprot-c { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pchip { display: inline-flex; align-items: center; gap: 5px; justify-content: flex-start; height: 26px; padding: 0 9px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--pc) 55%, transparent);
+  background: color-mix(in srgb, var(--pc) 12%, transparent); color: var(--pc); font: 650 11.5px Inter, sans-serif; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pchip.off { opacity: .35; filter: grayscale(.6); background: none; }

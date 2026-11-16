@@ -8,8 +8,14 @@
   const setHTML = (el, v) => { if (el && el._h !== v) { el._h = v; el.innerHTML = v; } };
   const setText = (el, v) => { if (el && el.textContent !== v) el.textContent = v; };
   const COLS = [['new', 'New Pairs'], ['final', 'Final Stretch'], ['mig', 'Migrated']];
-  const DEF = { presets: [0.1, 0.25, 0.5], preset: 1, q: '', minMc: '', maxMc: '', maxAge: '', minHold: '', minVol: '', muted: false };
+  const DEF = { presets: [0.1, 0.25, 0.5], preset: 1, q: '', minMc: '', maxMc: '', maxAge: '', minHold: '', minVol: '', muted: false, off: {} };
 
+  // Protocols (Nov 16, the playtester's Axiom reference): each column can hide coins by launchpad, Mayhem, or the DEX they migrated to
+  const PROTOS = [['pump', 'Pump', '#2bd67b', 'pill'], ['mayhem', 'Mayhem', '#ff7a45', 'bot'], ['bonk', 'Bonk', '#ff9f43', 'dog'], ['stonk', 'Stonkfun', '#a77bff', 'trending-up'],
+    ['launchlab', 'LaunchLab', '#4aa8ff', 'rocket'], ['flap', 'Flap', '#c6f432', 'feather'], ['pons', 'Pons', '#e8ecf3', 'circle-dot'], ['legacy', 'Launchpad', '#f4b23e', 'circle'], ['pumpamm', 'Pump AMM', '#2bd67b', 'repeat']];
+  const PAD_PROTO = { pumplab: 'pump', bonkpad: 'bonk', stonkz: 'stonk', raylaunch: 'launchlab', flap: 'flap', pons: 'pons', legacy: 'legacy' };
+  const protoOf = (tk) => (tk.mayhem ? 'mayhem' : tk.stage === 'amm' && tk.lp === 'pumplab' ? 'pumpamm' : PAD_PROTO[tk.lp] || 'legacy');
+  UI.protoOf = protoOf;
   function cfg() {
     const s = UI.settings;
     if (!s.pulse) s.pulse = {};
@@ -42,6 +48,8 @@
       const pre = e.target.closest('[data-pre]'); if (pre) { const [id, i] = pre.dataset.pre.split(':'); P2[id].preset = +i; this.saveSettings(); this.go('pulse'); return; }
       const mu = e.target.closest('[data-mute]'); if (mu) { const c = P2[mu.dataset.mute]; c.muted = !c.muted; this.saveSettings(); mu.innerHTML = icon(c.muted ? 'volume-x' : 'volume-2', 'sm'); return; }
       const fb = e.target.closest('[data-filt]'); if (fb) { const id = fb.dataset.filt, p = $('#fp-' + id); p.hidden = !p.hidden; if (!p.hidden) this.filterPanel(p, id); return; }
+      const pr = e.target.closest('[data-proto]'); if (pr) { const [id, k] = pr.dataset.proto.split(':'); const c = P2[id]; c.off = c.off || {}; c.off[k] = !c.off[k]; this.saveSettings(); this.filterPanel($('#fp-' + id), id); this.render(true); return; }
+      const pa = e.target.closest('[data-protoall]'); if (pa) { const id = pa.dataset.protoall, c = P2[id], any = Object.values(c.off || {}).some(Boolean); c.off = {}; if (!any) for (const [k] of PROTOS) c.off[k] = true; this.saveSettings(); this.filterPanel($('#fp-' + id), id); this.render(true); return; }
       if (e.target.closest('.fpanel')) { if (e.target.closest('[data-reset]')) { const id = e.target.closest('[data-reset]').dataset.reset; Object.assign(P2[id], { minMc: '', maxMc: '', maxAge: '', minHold: '', minVol: '' }); this.saveSettings(); this.filterPanel($('#fp-' + id), id); this.render(true); } return; }
       const q = e.target.closest('.qb'); if (q) { e.stopPropagation(); const c = P2[q.dataset.col]; const amt = c.presets[c.preset]; this.trade('buy', this.settings.unit === 'usd' ? amt / C.SOL_USD : amt, q.dataset.id); return; }
       const dd = e.target.closest('[data-dd]'); if (dd) return;
@@ -50,9 +58,11 @@
     this.rowEls = new Map();
   };
   UI.filterPanel = function (p, id) {
-    const c = cfg()[id];
+    const c = cfg()[id]; c.off = c.off || {};
+    const protos = '<div class="fprot"><div class="fprot-h"><b>Protocols</b><button class="btn sm ghost" data-protoall="' + id + '">' + (Object.values(c.off).some(Boolean) ? 'Select All' : 'Clear All') + '</button></div><div class="fprot-c">' +
+      PROTOS.map(([k, l, col, ic]) => '<button class="pchip' + (c.off[k] ? ' off' : '') + '" data-proto="' + id + ':' + k + '" style="--pc:' + col + '">' + icon(ic, 'sm') + esc(l) + '</button>').join('') + '</div></div>';
     const f = (k, label, ph) => '<label><span>' + label + '</span><input data-f="' + id + ':' + k + '" value="' + esc(c[k]) + '" placeholder="' + ph + '"></label>';
-    p.innerHTML = '<div class="fgrid">' + f('minMc', 'Min MC ($K)', 'any') + f('maxMc', 'Max MC ($K)', 'any') + f('maxAge', 'Max age (min)', 'any') + f('minHold', 'Min holders', 'any') + f('minVol', 'Min 5m vol ($K)', 'any') + '</div><button class="btn sm ghost" data-reset="' + id + '">Reset</button>';
+    p.innerHTML = protos + '<div class="fgrid">' + f('minMc', 'Min MC ($K)', 'any') + f('maxMc', 'Max MC ($K)', 'any') + f('maxAge', 'Max age (min)', 'any') + f('minHold', 'Min holders', 'any') + f('minVol', 'Min 5m vol ($K)', 'any') + '</div><button class="btn sm ghost" data-reset="' + id + '">Reset</button>';
   };
 
   UI.rowEl = function (tk) {
@@ -111,6 +121,7 @@
       c += '<span class="axc ' + (h.xAge < 3 ? 'bad' : h.xAge < 20 ? 'warn' : 'ok') + '" data-tip="X account age">X ' + (h.xAge < 1 ? 'new' : h.xAge + 'd') + '</span>';
       if (h.insiders) c += '<span class="axc ' + (h.insiders >= 5 ? 'bad' : 'warn') + '" data-tip="Insider wallets spotted">' + icon('ghost', 'sm') + h.insiders + '</span>';
     }
+    if (tk.mayhem) { const M = tk.mayhem, live = !M.done; c += '<span class="axc mh' + (live ? ' live' : '') + '" data-tip="' + (live ? 'Mayhem: pump.fun\'s bot is trading this coin at random (' + M.trades + ' trades so far)' : 'Mayhem ended: the bot made ' + M.trades + ' trades') + '">' + icon('bot', 'sm') + (live ? 'Mayhem' : 'Mayhem ✓') + '</span>'; }
     if (tk.rewards === 'holders') c += '<span class="axc ok" data-tip="Dividends: creator fees go to holders">' + icon('badge-dollar-sign', 'sm') + 'Div</span>';
     if (tk.pair === 'USD1') c += '<span class="axc" data-tip="Paired to USD1 (market cap ignores SOL moves)">USD1</span>';
     if (tk.copyOf) c += '<span class="axc warn" data-tip="A copy of a coin that just ran">' + icon('copy', 'sm') + 'Copy</span>';
@@ -130,6 +141,7 @@
   UI.renderPulse = function () {
     const sim = this.game.sim, p = this.game.player, P = cfg();
     const pass = (tk, c) => {
+      if (c.off && c.off[protoOf(tk)]) return false;
       if (c.q && !(tk.name.toLowerCase().includes(c.q) || tk.ticker.toLowerCase().includes(c.q) || tk.ca.toLowerCase().includes(c.q))) return false;
       const mc = sim.mc(tk) / 1000;
       if (c.minMc !== '' && mc < +c.minMc) return false; if (c.maxMc !== '' && mc > +c.maxMc) return false;

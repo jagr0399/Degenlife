@@ -1,4 +1,4 @@
-/* Whale and KOL agents, round 2 (Nov 12), from a study of real wallets.
+/* Whale and KOL agents, round 2 (Nov 12), from the playtester's wallet study (docs/research/human-charts-spec.md, sections 3.11-3.12).
    Four more agent types next to game/whales.js (conviction / swing / early):
      chaser   (momentum chaser): buys tops in 2-4 clips after a big run, capitulates in 3-5 slices at -40%
      scalper  (market-maker): big clips into bounces and breakouts, out fast at +12-20% or -15%, re-buys later
@@ -65,8 +65,8 @@
       for (const id of Object.keys(a.pos)) {
         const p = a.pos[id], tk = sim.byId.get(id), h = tk && tk.holders.get(a.addr);
         if (!tk || !h || h.tokens < 1) { delete a.pos[id]; continue; }
-        if (p.clips > 0 && sim.t >= p.nextClip) { p.clips--; p.nextClip = sim.t + r.range(3, 40); p.lb = sim.t; const f = this.trade(a, tk, 'buy', p.clip, pick(r, THESIS[a.style])); if (f) { p.cost += f.sol || p.clip; a.bank -= p.clip; } continue; }
-        if (p.slices > 0) { if (sim.t >= p.nextSlice) { p.slices--; p.nextSlice = sim.t + r.range(8, 60); const frac = p.slices ? r.range(0.2, 0.4) : 1; this.sell(a, tk, h, p, frac, p.why); } continue; }
+        if (p.clips > 0 && !p.slices && sim.t >= p.nextClip) { p.clips--; p.nextClip = sim.t + r.range(3, 40); p.lb = sim.t; const f = this.trade(a, tk, 'buy', p.clip, pick(r, THESIS[a.style])); if (f) { p.cost += f.sol || p.clip; a.bank -= p.clip; } continue; }
+        if (p.slices > 0) { if (sim.t >= p.nextSlice && !(p.lb && sim.t - p.lb < 12)) { p.slices--; p.nextSlice = sim.t + r.range(8, 60); const frac = p.slices ? r.range(0.2, 0.4) : 1; this.sell(a, tk, h, p, frac, p.why); } continue; }
         const mult = sim.price(tk) / p.entry, held = sim.t - p.t;
         if (tk.rugged) { this.sell(a, tk, h, p, 1, 'Rugged. Out.'); continue; }
         if (p.lb && sim.t - p.lb < 12) continue;   // nobody sells seconds after adding (a real wallet doesn't flip its own clip)

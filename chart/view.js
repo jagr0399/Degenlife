@@ -374,7 +374,9 @@
     // your average buy / sell market cap on this coin (weighted by tokens, from your fills)
     {
       const DP = L.disp || {}, mine = (this.tk.bubbles || []).filter((b) => b.kind === 'you');
-      const avg = (side) => { let sol = 0, tok = 0; for (const b of mine) if (b.side === side && b.mc > 0) { sol += b.sol; tok += b.sol / b.mc; } return tok > 0 ? sol / tok : 0; };
+      // your real average fill: SOL spent / tokens received, as a market cap. (b.mc is the market cap AFTER the trade, which includes
+      // your own price impact, so on a small coin a big buy put the line near the top of your own buy candle.) Old bubbles without tok fall back.
+      const avg = (side) => { if (mine.some((b) => b.side === side) && mine.every((b) => b.side !== side || b.tok > 0)) { let sol = 0, tok = 0; for (const b of mine) if (b.side === side) { sol += b.sol; tok += b.tok; } return tok > 0 ? sol / tok * BH.C.TOTAL_SUPPLY * BH.C.SOL_USD : 0; } let sol = 0, tok = 0; for (const b of mine) if (b.side === side && b.mc > 0) { sol += b.sol; tok += b.sol / b.mc; } return tok > 0 ? sol / tok : 0; };
       const hline = (v, col, label) => { const y = m.yOfPrice(v); if (!(y > 8 && y < l.mainH)) return; ctx.setLineDash([8, 4]); ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(l.plotW, y); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1; ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.fillText(label + ' · ' + this.fmt(v), 10, label === 'Avg buy' ? y + 14 : y - 5); (this._tags = this._tags || []).push({ y, col, text: label === 'Avg buy' ? 'AVG B' : 'AVG S' }); };
       if (DP.avgBuy !== false) { const v = avg('buy'); if (v) hline(v, '#34d8a0', 'Avg buy'); }
       if (DP.avgSell !== false) { const v = avg('sell'); if (v) hline(v, '#ff5f78', 'Avg sell'); }
@@ -423,7 +425,7 @@
       // Axiom style: each bubble sits centered over its candle, just above the wick, never on top of the candles.
       // More trades in the same spot stack upward (at most 2 high); the same wallet again shows a count instead;
       // anything that would still overlap is left out, so the chart stays readable. Biggest trades (and yours) win.
-      const rad = m.barSpacing >= 7 ? 11 : 9, gap = 3, placed = [];
+      const rad = m.barSpacing >= 7 ? 14 : 11, gap = 3, placed = [];   // bigger, like Axiom / TX Gym (was 11 / 9)
       // speed (Nov 12): a spatial grid for the overlap test, a lookup for "same wallet nearby", and at most 3 bubbles per
       // candle (the rest fold into a count right away), so thousands of trades no longer make this O(n²)
       const cell = rad * 2 + 2, grid = new Map(), byWallet = new Map(), perCol = new Map();
@@ -462,7 +464,10 @@
         put({ x, y, r: rad, b: v.b, all: [v.b], col: v.i });
       }
       placed.sort((a, b) => a.b.sol - b.b.sol);
-      for (const q of placed) { this.drawBubble(q.x, q.y, q.r, q.b, q.all.length); this._bub.push(q); }
+      this._kt = new Set();   // one name tag per KOL per chart (the biggest trade gets it: bubbles draw small to big)
+      for (let qi = placed.length - 1; qi >= 0; qi--) { const kb = placed[qi].b; if (kb.kind === 'kol' && this.kolOf(kb) && !this._kt.has(kb.addr)) { this._kt.add(kb.addr); placed[qi].tag = true; } }
+      for (const q of placed) { this._tagThis = !!q.tag; this.drawBubble(q.x, q.y, q.r, q.b, q.all.length); this._bub.push(q); }
+      this._tagThis = false;
     }
     // callouts: a flag on the candle each call was made at, with the call's market cap and how it has done since
     this._calls = [];
@@ -557,13 +562,25 @@
     }
     if (L.ind.ema) { x = 10; ctx.fillStyle = COL.ema1; ctx.fillText('EMA 9', x, 32); ctx.fillStyle = COL.ema2; ctx.fillText('EMA 21', x + 46, 32); }
   };
+  // a picture by URL (real KOL avatars); failed loads are remembered so the cartoon is used
+  P.imgUrl = function (url) {
+    if (!/^https:\/\/[^\s"'<>()]+$/.test(url) && !/^data:image\/(svg\+xml|png|jpeg)[;,]/.test(url)) return null;   // https pictures, or the built-in grey placeholder
+    this.urlImgs = this.urlImgs || {};
+    let im = this.urlImgs[url];
+    if (!im) { im = this.urlImgs[url] = new this.win.Image(); im.referrerPolicy = 'no-referrer'; im.onload = () => this.draw(); im.onerror = () => { im.failed = true; }; im.src = url; }
+    return !im.failed && im.complete && im.naturalWidth ? im : null;
+  };
   P.img = function (i) {
     const k = i % 144;
     let im = this.imgs[k];
     if (!im) { im = this.imgs[k] = new this.win.Image(); im.onload = () => this.draw(); im.src = this.base + 'pfp/p' + String(k + 1).padStart(2, '0') + '.svg'; }
     return im.complete && im.naturalWidth ? im : null;
   };
+  // a KOL's real picture, looked up by wallet every time (old bubbles kept a dead unavatar link; Real/Parody can switch)
+  P.kolOf = function (b) { const J = BH.J7; if (!J || !J.names) return null; return J.names[b.addr] || (b.kind === 'kol' && J.kolFor ? J.kolFor(b.addr) : null); };
+  P.realPic = function (b) { const kn = this.kolOf(b); return (kn ? kn.pfpUrl : b.pfpUrl) || null; };
   P.bubbleSprite = function (b, rad, ring) {
+    if (this.realPic(b)) return null;   // real pictures draw directly (the cached sprite is the cartoon)
     const dpr = (this.win && this.win.devicePixelRatio) || 1, im = this.img(b.pfp); if (!im) return null;
     const key = (b.pfp % 144) + '|' + ring + '|' + (b.plat || 0) + '|' + rad + '|' + dpr;
     const cache = this._spr || (this._spr = new Map()); let c = cache.get(key); if (c) return c;
@@ -579,7 +596,15 @@
     if (cache.size > 900) cache.clear();
     cache.set(key, c); c._S = S; return c;
   };
+  P.kolTag = function (x, y, rad, name, side) {
+    const ctx = this.ctx; ctx.save();
+    ctx.font = '700 9.5px Inter, system-ui, sans-serif';
+    const label = '@' + String(name).replace(/^@+/, ''), w = ctx.measureText(label).width + 10, tx = x + rad + 3, ty = y - 7;
+    ctx.fillStyle = side === 'sell' ? '#ef6f86' : '#b59cff'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(tx, ty, w, 14, 4); else ctx.rect(tx, ty, w, 14); ctx.fill();
+    ctx.fillStyle = '#0b0d12'; ctx.textAlign = 'left'; ctx.fillText(label, tx + 5, ty + 10.2); ctx.restore();
+  };
   P.drawBubble = function (x, y, rad, b, count) {
+    { const kn = b.kind === 'kol' && this.kolOf(b); if (kn && this._tagThis) this.kolTag(x, y, rad, kn.name, b.side); }
     const ctx = this.ctx, ring = b.kind === 'you' ? '#f4b23e' : b.side === 'buy' ? '#22c55e' : '#ef4444';
     const spr = this.bubbleSprite(b, rad, ring);
     if (spr) {
@@ -590,7 +615,7 @@
     ctx.save();
     ctx.beginPath(); ctx.arc(x, y, rad + 1, 0, Math.PI * 2); ctx.fillStyle = '#07080b'; ctx.fill();
     ctx.beginPath(); ctx.arc(x, y, rad - 1.5, 0, Math.PI * 2); ctx.closePath();
-    const im = this.img(b.pfp);
+    const rp = this.realPic(b), im = (rp && this.imgUrl(rp)) || this.img(b.pfp);   // a real KOL's picture when it loaded, else the cartoon
     if (im) { ctx.save(); ctx.clip(); ctx.drawImage(im, x - rad, y - rad, rad * 2, rad * 2); ctx.restore(); } else { ctx.fillStyle = '#1f2430'; ctx.fill(); }
     ctx.beginPath(); ctx.arc(x, y, rad - 0.75, 0, Math.PI * 2); ctx.lineWidth = 2; ctx.strokeStyle = ring; ctx.stroke();
     // trading-app badge, bottom right
@@ -619,13 +644,20 @@
     }
     const ago = sim ? sim.t - b.t : 0;
     const thesisHTML = b.thesis ? '<div class="pt-thesis">\u201C' + esc(b.thesis) + '\u201D</div>' : '';
-    tip.innerHTML = '<div class="pt-head"><img src="' + this.base + 'pfp/p' + String((b.pfp % 144) + 1).padStart(2, '0') + '.svg"><b>' + esc(b.name) + '</b><span class="pt-plat p' + (b.plat || 0) + '">' + ['Bagholder', 'PumpLab', 'Fomoz'][b.plat || 0] + '</span></div>' +
-      '<div class="pt-amt ' + (b.side === 'buy' ? 'up' : 'down') + '">' + b.sol.toFixed(3) + ' SOL</div>' +
-      (hit.all && hit.all.length > 1 ? '<div class="pt-more">' + hit.all.length + ' trades here · newest shown</div>' : '') +
-      '<div class="pt-sub"><span class="pt-chip ' + b.side + '">' + same + ' ' + (b.side === 'buy' ? 'Buy' : 'Sell') + (same > 1 ? 's' : '') + '</span> @ ' + this.fmt(b.mc) + ' MC, ' + (ago < 60 ? Math.round(ago) + 's' : Math.round(ago / 60) + 'm') + ' ago</div>' + thesisHTML + pnl;
+    // Axiom-style card: avatar, name, time ago; "Bought 41.38 SOL @ $258K MC"; "+N more" when trades share the bubble
+    const agoTxt = ago < 60 ? Math.round(ago) + 's ago' : ago < 3600 ? Math.round(ago / 60) + 'm ago' : Math.round(ago / 3600) + 'h ago';
+    const more = hit.all && hit.all.length > 1 ? hit.all.length - 1 : 0;
+    void same;
+    const cartoon = this.base + 'pfp/p' + String((b.pfp % 144) + 1).padStart(2, '0') + '.svg', rp2 = this.realPic(b), real = rp2 && this.imgUrl(rp2) ? rp2 : null;
+    tip.innerHTML = '<div class="pt2"><img class="pt2-av" referrerpolicy="no-referrer" src="' + esc(real || cartoon) + '"><div class="pt2-b">' +
+      '<div class="pt2-top"><b>' + esc((b.kind === 'kol' && this.kolOf(b) ? this.kolOf(b).name : b.name)) + '</b><span>' + agoTxt + '</span></div>' +
+      '<div class="pt2-act"><b class="' + (b.side === 'buy' ? 'up' : 'down') + '">' + (b.side === 'buy' ? 'Bought' : 'Sold') + ' ' + b.sol.toFixed(2) + ' SOL</b> @ <b>' + this.fmt(b.mc) + '</b> MC</div>' +
+      (more ? '<div class="pt2-more">· +' + more + ' more</div>' : '') + thesisHTML + '</div></div>';   // like the reference: no PnL rows (void pnl)
     tip.hidden = false;
-    const W = this.cv.clientWidth;
-    tip.style.left = Math.min(W - 250, p.x + 14) + 'px'; tip.style.top = Math.max(4, p.y - 20) + 'px';
+    // right of the bubble, or flipped to its left when it would run off the chart (the plot ends before the price axis)
+    const W = (this.lay && this.lay.plotW) || this.cv.clientWidth, tw = tip.offsetWidth || 260, th = tip.offsetHeight || 80, H = this.cv.clientHeight;
+    tip.style.left = Math.max(4, p.x + 14 + tw > W ? p.x - 14 - tw : p.x + 14) + 'px';
+    tip.style.top = Math.max(4, Math.min(H - th - 4, p.y - 20)) + 'px';
   };
   P.axisTag = function (y, text, bg, fg) {
     const ctx = this.ctx, l = this.lay;

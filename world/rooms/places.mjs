@@ -218,7 +218,8 @@ export function buildApartment(scene, game, laptopTex) {
   // main desk with monitors (1 + bought monitors)
   const dk = desk(1.9, 0.75); dk.position.set(1.2, 0, -2.15); g.add(dk); sh.solid(0.25, 2.15, -2.6, -1.75);
   const nMon = 1 + Math.min(3, b.count('monitor'));
-  for (let i = 0; i < nMon; i++) { const s = makeScreen(512, 300, i === 0 ? 'chart' : i === 1 ? 'heat' : 'chart', { index: i }); screens.push(s); const m = monitor(i === 0 ? laptopTex : s.texture); m.position.set(1.2 + (i - (nMon - 1) / 2) * 0.66, 0.76, -2.35); m.rotation.y = (i - (nMon - 1) / 2) * -0.12; g.add(m); if (i === 0) room.mainMonitor = m; }
+  for (let i = 0; i < nMon; i++) { const s = makeScreen(512, 300, i === 0 ? 'chart' : i === 1 ? 'heat' : 'chart', { index: i }); screens.push(s); const mw = nMon >= 4 ? 0.42 : nMon === 3 ? 0.52 : 0.62, off = i - (nMon - 1) / 2;   // sized and spaced to fit the 1.9 m desk (Nov 16: the 4th hung off the edge), in a slight wrap
+    const m = monitor(i === 0 ? laptopTex : s.texture, mw); m.position.set(1.2 + off * (mw + 0.035), 0.76, -2.35 + off * off * 0.05); m.rotation.y = off * -0.16; g.add(m); if (i === 0) room.mainMonitor = m; }
   if (b.count('chair')) { const ch = Dec.gamingChair(); ch.position.set(1.2, 0, -1.4); ch.rotation.y = 0.15; g.add(ch); }
   const seatMain = { pos: new THREE.Vector3(1.2, 1.22, -1.35), look: new THREE.Vector3(1.2, 0.98, -2.4), view: null };
   room.seat = seatMain;
@@ -226,8 +227,8 @@ export function buildApartment(scene, game, laptopTex) {
   // bed
   const bd = b.count('bed') ? bed() : P.mattress(); bd.position.set(-2.2, 0, 0.6); g.add(bd); sh.solid(-3.2, -1.4, -0.5, 1.7);
   interactables.push({ id: 'bed', action: 'sleep', mesh: bd, prompt: 'Sleep' });
-  // couch facing the community wall
-  const cc = model('Sofa_01', 1.9, { fit: 'w', fallback: couch }); cc.position.set(0.15, 0, 1.75); cc.rotation.y = Math.PI; g.add(cc); sh.solid(-0.85, 1.15, 1.4, 2.1);
+  // couch facing the community wall (moved right on Nov 16: it blocked the bedroom doorway; ~0.75 m walkway to the door now)
+  const cc = model('Sofa_01', 1.9, { fit: 'w', fallback: couch }); cc.position.set(0.8, 0, 1.75); cc.rotation.y = Math.PI; g.add(cc); sh.solid(-0.15, 1.75, 1.4, 2.1);
   // community wall: Chirp + heat screens on the left wall
   for (const [k, z] of [['chirp', -1.2], ['heat', -2.25]]) { const s = makeScreen(640, 400, k); screens.push(s); const m = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.75), new THREE.MeshStandardMaterial({ color: 0, emissive: 0xffffff, emissiveMap: s.texture, emissiveIntensity: 0.9 })); m.position.set(-W / 2 + 0.02, 1.55, z); m.rotation.y = Math.PI / 2; g.add(m); }
   // dev desk with the RUG button
@@ -242,11 +243,11 @@ export function buildApartment(scene, game, laptopTex) {
   const fr = P.fridge(); fr.position.set(2.85, 0, 0.1); fr.rotation.y = -Math.PI / 2; g.add(fr); sh.solid(2.55, 3.2, -0.2, 0.4);
   interactables.push({ id: 'fridge', action: 'eat', mesh: fr, prompt: 'Eat' });
   interactables.push({ id: 'door', action: 'door', mesh: sh.door, prompt: 'Leave (map)' });
-  addOwned(room, game, { boxes: new THREE.Vector3(2.6, 0, 2.2), plants: [new THREE.Vector3(-2.9, 0, -2.3), new THREE.Vector3(2.9, 0, -2.3), new THREE.Vector3(-2.9, 0, 2.3), new THREE.Vector3(0.7, 0, 2.3)], rgb: [[new THREE.Vector3(1.2, 0.75, -2.55), 1.8], [new THREE.Vector3(-2.2, 0.4, -0.5), 1.4]], coffee: [new THREE.Vector3(2.85, 0.85, 0.1), -Math.PI / 2], radio: [new THREE.Vector3(1.8, 0, 2.38), Math.PI], stand: [new THREE.Vector3(-0.35, 0, -2.35), 0], shelf: [new THREE.Vector3(3.06, 0, -1.4), -Math.PI / 2], clock: [new THREE.Vector3(-1.2, 0.7, -0.22), -1.2], megaphone: [new THREE.Vector3(3.0, 0, -0.6), -2.2], armchair: [new THREE.Vector3(1.5, 0, 0.75), -Math.PI / 2], coffeetable: [new THREE.Vector3(0.15, 0, 0.75), 0], cat: new THREE.Vector3(-0.4, 0, 0.2) });
+  addOwned(room, game, { boxes: new THREE.Vector3(2.6, 0, 2.2), plants: [new THREE.Vector3(-2.9, 0, -2.3), new THREE.Vector3(2.9, 0, -2.3), new THREE.Vector3(-2.9, 0, 2.3), new THREE.Vector3(-0.35, 0, -2.35)], rgb: [[new THREE.Vector3(1.2, 0.75, -2.55), 1.8], [new THREE.Vector3(-2.2, 0.4, -0.5), 1.4]], coffee: [new THREE.Vector3(2.85, 0.85, 0.1), -Math.PI / 2], radio: [new THREE.Vector3(1.8, 0, 2.38), Math.PI], stand: [new THREE.Vector3(-0.35, 0, -2.35), 0], shelf: [new THREE.Vector3(3.06, 0, -1.4), -Math.PI / 2], clock: [new THREE.Vector3(-1.2, 0.7, -0.22), -1.2], megaphone: [new THREE.Vector3(3.0, 0, -0.6), -2.2], armchair: [new THREE.Vector3(1.5, 0, 0.75), -Math.PI / 2], coffeetable: [new THREE.Vector3(0.15, 0, 0.75), 0], cat: new THREE.Vector3(-0.4, 0, 0.2) });
   // make it read as a real apartment: kitchenette, curtains, lights, a fan, art, rug, clock, floor lamp, doormat
   { const an = room.anims; Dec.baseboards(g, W, D); Dec.curtains(g, [[-2.6, -1.0], [0.2, 1.8]], -D / 2, { top: 2.3 }); Dec.ceilingLight(g, 1.2, -1.2, H, { intensity: 0.7 }); Dec.ceilingFan(g, an, 0.2, 0.9, H);
     Dec.wallClock(g, an, game, -0.35, 1.75, -D / 2 + 0.02, 0); Dec.frames(g, [[-0.5, 1.6, D / 2 - 0.02, Math.PI, 0.5, 0.65, 0], [0.15, 1.65, D / 2 - 0.02, Math.PI, 0.7, 0.5, 1], [0.8, 1.6, D / 2 - 0.02, Math.PI, 0.5, 0.65, 3], [-W / 2 + 0.02, 1.55, 0.6, Math.PI / 2, 0.9, 0.6, 2]]);
-    Dec.rug(g, 0.2, 1.0, 2.2, 1.6, { base: '#4a3f3a', edge: '#d9c7a0' }); Dec.floorLamp(g, 1.35, 2.3); Dec.doormat(g, W / 2 - 0.45, D / 2 - 0.9, Math.PI / 2);
+    Dec.rug(g, 0.2, 1.0, 2.2, 1.6, { base: '#4a3f3a', edge: '#d9c7a0' }); Dec.floorLamp(g, 2.05, 2.4); Dec.doormat(g, W / 2 - 0.45, D / 2 - 0.9, Math.PI / 2);
     Dec.kitchenette(g, an, W / 2, 0.45, 1.2); sh.solid(W / 2 - 0.62, W / 2, 0.45, 1.2);
     // the bed gets its own room: two partition walls with a doorway by the front wall, a nightstand, a wardrobe, its own light
     Dec.partition(g, -W / 2, -0.6, -0.9, -0.6, H); sh.solid(-W / 2, -0.85, -0.66, -0.54);
@@ -256,7 +257,7 @@ export function buildApartment(scene, game, laptopTex) {
     const ns = model('ClassicNightstand_01', 0); ns.position.set(-1.2, 0, -0.27); ns.rotation.y = -Math.PI / 2; g.add(ns); sh.solid(-1.42, -0.98, -0.55, 0.02);
     const wd = model('drawer_cabinet', 1.7, { fit: 'h' }); wd.position.set(-2.55, 0, D / 2 - 0.27); wd.rotation.y = Math.PI; g.add(wd); sh.solid(-3.1, -2.0, D / 2 - 0.52, D / 2);
     Dec.ceilingLight(g, -2.1, 0.9, H, { intensity: 0.45, range: 4 }); Dec.rug(g, -1.2, 0.6, 0.45, 1.5, { base: '#2f3b52', edge: '#9fb4d8' }); }
-  const lamp = P.deskLamp(); lamp.group.position.set(2.0, 0.76, -2.4); g.add(lamp.group);
+  const lamp = P.deskLamp(); lamp.group.position.set(2.0, 0.76, -1.92);   // front corner, clear of the monitors g.add(lamp.group);
   room.lamp = lamp;
   interactables.push({ id: 'lamp', action: 'lamp', mesh: lamp.group, prompt: 'Toggle lamp' });
   return room;

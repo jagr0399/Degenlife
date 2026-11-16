@@ -48,7 +48,7 @@
   P.cv = function (tk) { return PAD_BY[tk.lp] || LEGACY; };
   P.gradMc = function (tk) { const lp = this.cv(tk), vTokEnd = C.CURVE_V_TOKENS - lp.real, vSolEnd = lp.vSol * C.CURVE_V_TOKENS / vTokEnd; return vSolEnd / vTokEnd * C.TOTAL_SUPPLY * C.SOL_USD; };
   P.pickPad = function (r) { let x = r(); for (const p of PADS) { if ((x -= p.w) < 0) return p; } return PADS[0]; };
-  P.progress = function (tk) { return tk.stage === 'curve' ? Math.min(100, tk.realTok / this.cv(tk).real * 100) : 100; };
+  P.progress = function (tk) { return tk.stage === "curve" ? Math.max(0, Math.min(100, tk.realTok / this.cv(tk).real * 100)) : 100; };   // (a Mayhem curve can hold more than it started with)
   P.liquidity = function (tk) { return tk.stage === 'amm' ? tk.poolSol * 2 : tk.realSol; };
   P.event = function (type, tk, text, extra) {
     const e = Object.assign({ t: this.t, type, id: tk ? tk.id : null, ticker: tk ? tk.ticker : '', text }, extra || {});
@@ -183,7 +183,7 @@
         const k = tk.vSol * tk.vTok;
         tok = tk.vTok - k / (tk.vSol + net);
         const left = lp.real - tk.realTok;
-        if (tok >= left) { // last buy fills the curve; the rest of the SOL is refunded
+        if (tok >= left && left > 0) { // last buy fills the curve; the rest of the SOL is refunded
           tok = left;
           net = k / (tk.vTok - tok) - tk.vSol;
           feeSol = net * fee / (1 - fee);
@@ -262,7 +262,7 @@
 
   P.migrate = function (tk) {
     tk.stage = 'amm';
-    tk.poolSol = tk.realSol - C.MIGRATION_FEE_SOL;
+    tk.poolSol = Math.max(0.005, tk.realSol - Math.min(C.MIGRATION_FEE_SOL, Math.max(0, tk.realSol) * 0.05));   // (a drained Mayhem curve graduates into a near-empty pool)
     tk.poolTok = C.TOTAL_SUPPLY - this.cv(tk).real;
     tk.migratedAt = this.t;
     tk.hype += tk.fate === 'runner' ? 1.6 : 0.8;

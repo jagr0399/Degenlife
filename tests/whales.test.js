@@ -31,7 +31,7 @@ test('no_director_wallet_flips_whale_sized_buys_straight_back', () => {
   const exec = g.sim.exec.bind(g.sim), last = {};
   g.sim.exec = function (tk, addr, kind, side, amt) {
     const f = exec(tk, addr, kind, side, amt);
-    if (f && kind === 'whale') { const k = tk.id + addr; if (last[k] && last[k] !== side && g.sim.t - (last[k + 't'] || 0) < 10) flips[addr] = (flips[addr] || 0) + 1; last[k] = side; last[k + 't'] = g.sim.t; }
+    if (f && kind === 'whale') { const k = tk.id + addr; if (last[k] === 'buy' && side === 'sell' && g.sim.t - (last[k + 't'] || 0) < 10) flips[addr] = (flips[addr] || 0) + 1; last[k] = side; last[k + 't'] = g.sim.t; }
     return f;
   };
   run(g, 900);

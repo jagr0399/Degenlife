@@ -19,7 +19,8 @@
     { id: 'plant', name: 'Plant', price: 40, place: 'any', max: 4, effect: { sanityDay: 2 }, desc: '+2 sanity a day each. It needs nothing from you.' },
     { id: 'rgb', name: 'RGB light strip', price: 60, place: 'any', max: 2, effect: { sanityDay: 1, focus: 1 }, desc: 'Vibes. +1 sanity a day, +1 focus.' },
     { id: 'bed', name: 'Real bed', price: 300, place: 'apartment', max: 1, effect: { sleep: 3 }, desc: 'Sleep restores energy faster.' },
-    { id: 'devdesk', name: 'Dev desk', price: 600, place: 'apartment', max: 1, effect: { devdesk: 1 }, desc: 'Launch, shill and (maybe) rug your own coins.' },
+    // Nov 16 (playtester): no more Apartment + desk to deploy; the license is bought anywhere and works right away. In the Apartment you also get the physical dev desk.
+    { id: 'devdesk', name: 'Deployer license', price: 250, place: 'any', max: 1, instant: true, effect: { devdesk: 1 }, desc: 'Deploy your own coins right away (Token Deploy, J7 DEPLOY), shill them and (maybe) rug them. In the Apartment you also get a dev desk.' },
     { id: 'desk', name: 'Trader desk', price: 400, place: 'office', max: 8, effect: { desks: 1 }, desc: 'One hired trader per desk.' },
     { id: 'rack', name: 'Server rack', price: 2500, place: 'tower', max: 8, effect: { racks: 1 }, desc: 'Each rack hosts 8 live coins on your launchpad.' },
     { id: 'cooling', name: 'Server cooling', price: 1500, place: 'tower', max: 2, effect: { cooling: 1 }, desc: 'Fewer outages when the racks run hot.' },
@@ -64,6 +65,7 @@
     const c = this.canBuy(id); if (!c.ok) return c;
     this.game.bills.pay(c.item.price);
     this.game.bills.log.push({ day: this.game.clock.day, what: c.item.name, usd: -c.item.price });
+    if (c.item.instant) { this.owned[id] = (this.owned[id] || 0) + 1; return { ok: true, text: c.item.name + ' unlocked. You can deploy coins now.' }; }
     this.deliveries.push({ item: id, at: this.game.clock.total + 1 });
     return { ok: true, text: c.item.name + ' ordered. The box arrives in about an hour.' };
   };

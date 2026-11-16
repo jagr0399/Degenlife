@@ -22,7 +22,15 @@
     return out.slice(0, 14);
   }
 
+  const hasDesk = () => { const b = UI.game && UI.game.sys && UI.game.sys.build; return !b || !!b.effects().devdesk; };
   UI.buildLaunch = function (el) {
+    // deploying your own coins is unlocked by the Deployer license (Shop; id devdesk)
+    if (!hasDesk()) {
+      el.innerHTML = '<div class="dp-wrap"><div class="card lock" style="max-width:460px;margin:60px auto;text-align:center">' + icon('lock', 'lg') + '<h2>Token Deploy needs a Deployer license</h2><p>Buy the Deployer license in the Shop ($250, works right away, anywhere). Until then you can trade every coin, but you can\'t deploy your own (the J7 DEPLOY button unlocks with it too).</p><button class="btn primary" data-go="shop">' + icon('shopping-bag', 'sm') + 'Open Shop</button></div></div>';
+      const g2 = el.querySelector('[data-go]'); if (g2) g2.onclick = () => (UI.openApp ? UI.openApp('shop') : UI.go('shop'));
+      el._locked = true; return;
+    }
+    el._locked = false;
     const f = UI.deployForm, pads = BH.PADS || [];
     const main = ['pumplab', 'flap', 'pons'].map((id) => pads.find((p) => p.id === id)).filter(Boolean);
     const rest = pads.filter((p) => !main.includes(p));
@@ -42,6 +50,7 @@
       '<div class="dp-pads">' + main.map((p, i) => padBtn(p, i === 0)).join('') + '<button class="dp-gear" id="dpGear" title="Other launchpads">' + icon('settings', 'sm') + '</button></div>' +
       '<div class="dp-pads more" id="dpMore"' + (f.moreLp ? '' : ' hidden') + '>' + rest.map((p) => padBtn(p)).join('') + '</div>' +
       '<div class="dp-opts"><button class="dp-div" id="dpDiv"><b class="dp-check"></b>' + icon('badge-dollar-sign', 'sm') + 'Dividends</button>' +
+        '<button class="dp-div dp-mh" id="dpMh" title="Mayhem Mode (Pump only): pump.fun\'s bot trades your coin at random for its first minutes"><b class="dp-check"></b>' + icon('bot', 'sm') + 'Mayhem</button>' +
         '<button class="dp-pair" id="dpPair"><span class="dp-solmk"></span><b id="dpPairT"></b>' + icon('chevron-down', 'sm') + '</button></div>' +
       '<div class="dp-note" id="dpNote"></div>' +
       '<div class="dp-buys">' + [1, 3, 5, 10].map((v) => '<button class="dp-buy" data-dev="' + v + '"><span class="dp-solmk"></span>' + v + '</button>').join('') + '<button class="dp-edit" id="dpEdit" title="Custom dev buy">' + icon('pencil', 'sm') + '</button></div>' +
@@ -63,12 +72,15 @@
       for (const b of el.querySelectorAll('.dp-img')) b.classList.toggle('on', f.realImg ? b.dataset.real === f.realImg : +b.dataset.img === f.img && !b.dataset.real);
       $('#dpCur', el).innerHTML = '<img src="' + esc(f.realImg || '../assets/coins/c' + f.img + '.jpg') + '" alt="" referrerpolicy="no-referrer">';
       $('#dpDiv', el).classList.toggle('on', f.rewards === 'holders');
+      if (f.lp !== 'pumplab') f.mayhem = false;
+      $('#dpMh', el).classList.toggle('on', !!f.mayhem); $('#dpMh', el).disabled = f.lp !== 'pumplab';
       $('#dpPairT', el).textContent = f.pair;
       $('#dpGoAmt', el).textContent = String(f.devBuy);
       if (pl) $('#dpBal', el).textContent = pl.sol.toFixed(2) + ' SOL';
       const pad = (BH.PADS || []).find((p) => p.id === f.lp), grad = pad && gm ? gm.sim.gradMc({ lp: pad.id }) : 0;
       $('#dpNote', el).innerHTML = (pad ? '<b>' + esc(pad.id === 'pumplab' ? 'Pump' : pad.name) + '</b> curve graduates near <b>' + BH.fmt.usd(grad) + '</b> · fee ' + (pad.fee * 100).toFixed(2) + '%. ' : '') +
         (f.rewards === 'holders' ? 'Dividends on: creator fees are paid to your holders, not you. Holders hold longer; you earn only from your bag.' : 'Creator rewards: you keep the creator fee on every trade.') +
+        (f.mayhem ? ' <b>Mayhem on:</b> pump.fun\'s bot gets 1B extra tokens and trades your coin at random (tiny trades, big jumps). Most Mayhem coins end far below launch; a few survive.' : '') +
         ' ' + (f.pair === 'USD1' ? 'Paired to USD1: your market cap in $ ignores SOL\'s moves.' : 'Paired to SOL: your market cap in $ moves with SOL.');
       const d = f.devBuy, q = d > 0 ? d * (1 - (pad ? pad.fee : C.CURVE_FEE)) : 0, vS = pad ? pad.vSol : C.CURVE_V_SOL;
       const tok = q > 0 ? C.CURVE_V_TOKENS - vS * C.CURVE_V_TOKENS / (vS + q) : 0;
@@ -86,6 +98,7 @@
       const b = t.closest('.dp-buy'); if (b) { f.devBuy = +b.dataset.dev; f.editDev = false; $('#dpCustom', el).hidden = true; upd(); return; }
       if (t.closest('#dpEdit')) { f.editDev = !f.editDev; $('#dpCustom', el).hidden = !f.editDev; if (f.editDev) $('#dpDevIn', el).focus(); upd(); return; }
       if (t.closest('#dpGear')) { f.moreLp = !f.moreLp; $('#dpMore', el).hidden = !f.moreLp; return; }
+      if (t.closest('#dpMh')) { if (f.lp === 'pumplab') f.mayhem = !f.mayhem; upd(); return; }
       if (t.closest('#dpDiv')) { f.rewards = f.rewards === 'holders' ? 'creator' : 'holders'; upd(); return; }
       if (t.closest('#dpPair')) { f.pair = f.pair === 'SOL' ? 'USD1' : 'SOL'; upd(); return; }
       if (t.closest('#dpPre')) {
@@ -102,6 +115,7 @@
     el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); deploy(); } });
 
     const deploy = () => {
+      if (!hasDesk()) { UI.toast("fail", "Deploying coins needs the Deployer license (Shop)"); return; }
       upd();
       if (f.name.trim().length < 2) return UI.toast('fail', 'Give your coin a name');
       if (f.ticker.length < 2) return UI.toast('fail', 'Symbol needs 2+ letters');
@@ -109,9 +123,10 @@
       const res = UI.game.player.launchCoin({ name: f.name.trim(), ticker: f.ticker, desc: '', hue: Math.floor(Math.random() * 360), socials, devBuy: f.devBuy, lp: f.lp, img: f.realImg ? null : f.img, rewards: f.rewards, pair: f.pair });
       if (!res.ok) return UI.toast('fail', res.reason);
       if (f.realImg) res.token.realImg = f.realImg;
+      if (f.mayhem && f.lp === 'pumplab' && UI.game.sys.mayhem) UI.game.sys.mayhem.enable(res.token, { start: 1 + Math.random() * 4 });
       if (f.web && SAFE_URL.test(f.web)) res.token.website = f.web;
       UI.toast('buy', '$' + res.token.ticker + ' deployed on ' + ((BH.PADS || []).find((p) => p.id === f.lp) || { name: 'the curve' }).name.replace('PumpLab', 'Pump'), { id: res.token.id });
-      UI.deployForm = Object.assign(blank(), { lp: f.lp, rewards: f.rewards, pair: f.pair, devBuy: f.devBuy });
+      UI.deployForm = Object.assign(blank(), { lp: f.lp, rewards: f.rewards, pair: f.pair, devBuy: f.devBuy, mayhem: f.mayhem });
       UI.openToken(res.token.id);
     };
     upd();

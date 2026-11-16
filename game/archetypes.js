@@ -1,4 +1,4 @@
-/* Launch archetypes (Nov 12), from a study of real launches.
+/* Launch archetypes (Nov 12), from the playtester's Axiom study of real launches (docs/research/human-charts-spec.md, section 3.8).
    Each archetype is a chart the director plays back (prices relative to the curve floor at launch), built from segments:
      jump   one big candle, no wick (the creator's buy, or bundled / sniper buys landing in the same second)
      stairs climbing in steps with small dips          chop  sideways, mean-reverting

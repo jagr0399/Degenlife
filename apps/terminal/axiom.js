@@ -11,9 +11,9 @@
   const toast = (r) => UI.toast(r.ok ? 'info' : 'fail', r.text || r.reason || '');
   const TRADE_TABS = [['discover', 'Discover'], ['pulse', 'Pulse'], ['trackers', 'Trackers'], ['perps', 'Perpetuals'], ['predict', 'Predictions'], ['portfolio', 'Portfolio'], ['rewards', 'Rewards']];
   const APPS = [
-    ['terminal', 'Bagholder', 'candlestick-chart', '#f4b23e', 'pulse'], ['chirp', 'Chirp', 'message-circle', '#4aa8ff', 'chirp'], ['scope', 'Scope', 'radar', '#2bd67b', 'scope'],
+    ['terminal', 'Bagholder', 'candlestick-chart', '#f4b23e', 'pulse'], ['chirp', 'J7', 'message-circle', '#4aa8ff', 'chirp'], ['scope', 'Scope', 'radar', '#2bd67b', 'scope'],
     ['shop', 'Shop', 'shopping-bag', '#ff7a45', 'shop'], ['bank', 'Bank', 'landmark', '#a77bff', 'bank'], ['dev', 'Coin Factory', 'hammer', '#ff4d5e', 'dev'],
-    ['firm', 'Firm', 'users', '#3fd2c7', 'firm'], ['pad', 'LaunchLab', 'building-2', '#6b8cff', 'pad'], ['trencher', 'Trencher', 'megaphone', '#ff5fa2', 'trencher'], ['news', 'News', 'newspaper', '#e8ecf3', 'news'], ['radio', 'Radio', 'radio', '#f4d03e', 'radio'],
+    ['firm', 'Firm', 'users', '#3fd2c7', 'firm'], ['pad', 'LaunchLab', 'building-2', '#6b8cff', 'pad'], ['trencher', 'Callouts', 'megaphone', '#ff5fa2', 'trencher'], ['news', 'News', 'newspaper', '#e8ecf3', 'news'], ['radio', 'Radio', 'radio', '#f4d03e', 'radio'],
   ];
   const APP_OF_VIEW = { trencher: 'trencher', chirp: 'chirp', scope: 'scope', shop: 'shop', bank: 'bank', dev: 'dev', launch: 'dev', firm: 'firm', pad: 'pad', news: 'news', radio: 'radio' };
 
@@ -67,7 +67,7 @@
     trackers: {
       build(el) {
         this.sub = this.sub || 'wallets';
-        el.innerHTML = '<div class="xp"><h1>' + icon('radar', 'lg') + 'Trackers<div class="spacer"></div><div class="seg" id="trSub"><button data-s="wallets">Wallets</button><button data-s="scope">Scope</button><button data-s="chirp">Chirp</button></div></h1><div id="trBody"></div></div>';
+        el.innerHTML = '<div class="xp"><h1>' + icon('radar', 'lg') + 'Trackers<div class="spacer"></div><div class="seg" id="trSub"><button data-s="wallets">Wallets</button><button data-s="scope">Scope</button><button data-s="chirp">J7</button></div></h1><div id="trBody"></div></div>';
         el.addEventListener('click', (e) => {
           const s = e.target.closest('[data-s]'); if (s) { this.sub = s.dataset.s; $('#trBody')._h = null; this.render(); return; }
           const c = e.target.closest('[data-coin]'); if (c && game().sim.byId.get(c.dataset.coin)) { UI.openToken(c.dataset.coin); return; }
@@ -177,7 +177,7 @@
           '<div class="card"><h2>Tiers</h2><table class="tbl"><thead><tr><th class="l">Tier</th><th>Points</th><th>Fee cashback</th></tr></thead><tbody>' + BH.Rewards.TIERS.map((x, i) => '<tr class="' + (i === t.idx ? 'on' : '') + '"><td class="l">' + x[0] + '</td><td>' + x[1].toLocaleString() + '</td><td>' + Math.round(x[2] * 100) + '%</td></tr>').join('') + '</tbody></table><p class="note">Fees paid: ' + rw.feesPaid.toFixed(3) + ' SOL · claimed so far: ' + rw.claimed.toFixed(4) + ' SOL</p></div>');
       },
     },
-    trencher: {
+    trencherOld: {   // replaced by the Callouts app (apps/terminal/callouts-ui.js)
       build(el) {
         el.innerHTML = '<div class="xp" id="trc"></div>';
         el.addEventListener('click', (e) => {
@@ -211,10 +211,11 @@
     },
     news: { build(el) { el.innerHTML = '<div class="xp"><h1>' + icon('newspaper', 'lg') + 'Degen News Network</h1><div class="card" id="nw"></div></div>'; }, render() { setHTML($('#nw'), V.newsHTML(game())); } },
     radio: {
-      build(el) { el.innerHTML = '<div class="xp"><h1>' + icon('radio', 'lg') + 'Radio</h1><div class="card" id="rd"></div></div>'; el.addEventListener('click', (e) => { const b = e.target.closest('[data-r]'); if (!b || !BH.Sound) return; const S = BH.Sound, r = b.dataset.r; if (r === 'toggle') S.setRadio(!S.radioOn); if (r === 'next') S.next(); if (r === 'shuffle') S.setShuffle(!S.shuffle); if (r === 'station') S.setStation(b.dataset.s); if (r === 'track') S.playIndex(+b.dataset.i); $('#rd')._h = null; }); },
+      build(el) { el.innerHTML = '<div class="xp"><h1>' + icon('radio', 'lg') + 'Radio</h1><div class="card" id="rd"></div></div>'; el.addEventListener('click', (e) => { const b = e.target.closest('[data-r]'); if (!b || !BH.Sound) return; const S = BH.Sound, r = b.dataset.r; if (r === 'myfolder') { const api = (g.parent && g.parent.degen) || g.degen; if (api && api.openMyMusic) api.openMyMusic(); }
+          if (r === 'rescan' && S.loadMyMusic) S.loadMyMusic().then((n) => UI.toast('info', n ? n + ' new song' + (n > 1 ? 's' : '') + ' in My Music' : 'No new songs. Put audio files in Music\\Degen Life')); if (r === 'toggle') S.setRadio(!S.radioOn); if (r === 'next') S.next(); if (r === 'shuffle') S.setShuffle(!S.shuffle); if (r === 'station') S.setStation(b.dataset.s); if (r === 'track') S.playIndex(+b.dataset.i); $('#rd')._h = null; }); },
       render() { const S = BH.Sound; if (!S) return; const cur = S.track % S.MUSIC.length; setHTML($('#rd'), '<div class="kv"><span>Now playing</span><b>' + esc(S.radioOn ? S.station + ' · ' + S.nowPlaying() : 'Off') + '</b></div>' +
         '<div class="seg rd-st">' + S.stations().map((st) => '<button data-r="station" data-s="' + esc(st) + '" class="' + (S.radioOn && S.station === st ? 'on' : '') + '">' + esc(st) + ' <small>' + S.inStation(st).length + '</small></button>').join('') + '</div>' +
-        '<div class="row-btns"><button class="btn primary" data-r="toggle">' + (S.radioOn ? 'Turn off' : 'Turn on') + '</button><button class="btn" data-r="next">Next song</button><button class="btn' + (S.shuffle ? ' primary' : '') + '" data-r="shuffle">Shuffle ' + (S.shuffle ? 'on' : 'off') + '</button></div>' +
+        '<p class="note">My Music: put your own songs (mp3, m4a, ogg, wav, flac) in <b>Music\\Degen Life</b>, then press Rescan. They play only on your PC.</p><div class="row-btns"><button class="btn" data-r="myfolder">Open My Music folder</button><button class="btn" data-r="rescan">Rescan</button></div>' + '<div class="row-btns"><button class="btn primary" data-r="toggle">' + (S.radioOn ? 'Turn off' : 'Turn on') + '</button><button class="btn" data-r="next">Next song</button><button class="btn' + (S.shuffle ? ' primary' : '') + '" data-r="shuffle">Shuffle ' + (S.shuffle ? 'on' : 'off') + '</button></div>' +
         S.inStation().map((i) => { const m = S.MUSIC[i]; return '<div class="trw"><span class="emo">' + (S.radioOn && cur === i ? '▶' : '♪') + '</span><b>' + esc(m[0]) + '</b>' + (m[3] ? ' <span class="dim">' + esc(m[3]) + '</span>' : '') + '<div class="spacer"></div><button class="btn sm" data-r="track" data-i="' + i + '">Play</button></div>'; }).join('') + '<p class="note">Free CC0 music; see docs/CREDITS.md. The radio in your room flips through the stations.</p>'); },
     },
   };

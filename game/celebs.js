@@ -104,7 +104,6 @@
     s.bump(nar, 25 * c.power + 10); s.boost = Math.min(0.9, (s.boost || 0) + 0.3 * c.power);
     this.tweets.push({ t: sim.t, who: c.handle, text, coin });
     if (gm.sys.world) gm.sys.world.headline(c.name + ' tweeted: "' + text + '"' + (coin ? '. Coins are launching on it.' : ''));
-    gm.emit('toast', { kind: 'call', text: c.name + ' tweeted: "' + text + '"' + (coin ? ' · coins launching on it' : '') });
     if (coin) {
       const n = 3 + Math.floor(r() * 5 * c.power), base = sim.t;
       const order = VARIANTS.slice(); for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
@@ -117,7 +116,6 @@
       if (r() < 0.15) this.react(base + 90 + r() * 120, () => {
         for (const tk of sim.tokens) if (tk.celeb === c.handle && !tk.dead && sim.t - tk.born < 400) this.nudge(tk, 0.55);
         if (gm.sys.world) gm.sys.world.headline(c.name + ' deleted the tweet. The copies are dumping.');
-        gm.emit('toast', { kind: 'bad', text: c.name + ' deleted the "' + text.slice(0, 40) + '" tweet. The copies are dumping.' });
         const k = s.kols.find((x) => x.handle === '@rugradar') || this.kol(); return k && [k, c.handle + ' deleted the tweet. every $' + BH.Names.ticker(coin, r).replace(/^\$/, '') + ' copy is bleeding. told you'];
       });
       this.react(base + 6, () => { const k = this.kol(); return k && [k, '🚨 ' + c.handle + ' just tweeted "' + text + '". $' + BH.Names.ticker(coin, r).replace(/^\$/, '') + ' is already live. which one is the real one?', { quote: { name: c.name, handle: c.handle, pfp: c.pfp, gold: c.gold, text } }]; });
@@ -132,7 +130,8 @@
     const gm = this.game, s = gm.sys.social, sim = gm.sim, r = this._r, px = gm.sys.perps;
     let [text, coin, nar, type] = tw;
     const say = (t, extra) => s.post(this.acc(c), 'celeb', t, Object.assign({ celeb: true, gold: c.gold, likes: Math.round(c.followers * (0.002 + r() * 0.006)), reposts: Math.round(c.followers * (0.0004 + r() * 0.001)), views: Math.round(c.followers * (0.08 + r() * 0.3)) }, extra || {}));
-    const news = (h, kind) => { if (gm.sys.world) gm.sys.world.headline(h); gm.emit('toast', { kind: kind || 'call', text: h }); };
+    // tweets live in J7 (and the news headline); a pop-up only when the tweet hits a coin you hold
+    const news = (h, kind, tk) => { if (gm.sys.world) gm.sys.world.headline(h); const p = tk && gm.player && gm.player.pos && gm.player.pos.get(tk.id); if (p && p.tokens > 1) gm.emit('toast', { kind: kind || 'call', text: h + ' (your bag!)' }); };
     s.bump(nar || 'celeb', 12 * c.power + 6);
     this.tweets.push({ t: sim.t, who: c.handle, text, type });
     if (type === 'shill' || type === 'inverse') {
@@ -141,7 +140,7 @@
       const tk = this.hotCoin(); if (!tk) return null;
       const t2 = text.replace('{coin}', '$' + tk.ticker), post = say(t2, { coin: tk.id, media: true });
       this.nudge(tk, type === 'inverse' ? 0.6 + r() * 0.15 : 1.35 + r() * 0.5 * c.power);
-      news(c.name + ' tweeted about $' + tk.ticker + (type === 'inverse' ? '. The inverse curse strikes: it dumps.' : '. It is pumping.'), type === 'inverse' ? 'bad' : 'call');
+      news(c.name + ' tweeted about $' + tk.ticker + (type === 'inverse' ? '. The inverse curse strikes: it dumps.' : '. It is pumping.'), type === 'inverse' ? 'bad' : 'call', tk);
       this.react(sim.t + 4, () => { const k = this.kol(); return k && [k, type === 'inverse' ? 'inverse ' + c.handle + ' never misses. $' + tk.ticker + ' down bad' : c.handle + ' tweeted $' + tk.ticker + '. send it', { coin: tk.id, quote: { name: c.name, handle: c.handle, pfp: c.pfp, gold: c.gold, text: t2 } }]; });
       return post;
     }
@@ -176,6 +175,7 @@
       tk.name = q.name.slice(0, 32); tk.ticker = BH.Names.ticker(q.name, r).replace(/^\$/, '').slice(0, 10).toUpperCase();
       tk.narrative = q.nar; tk.custom = true; tk.realImg = null; tk.realMint = null; tk.img = Math.floor(r() * 200);
       tk.hype = Math.max(tk.hype || 1, q.hype); tk.celeb = q.celeb;
+      if (tk.dir) { tk.dir.sec = Math.max(0.8, (tk.dir.sec || 2) * 0.5); tk.dir.fzUntil = sim.t + 30 + r() * (q.fate === 'mega' || q.fate === 'runner' ? 120 : 40); tk.dir.fzCool = tk.dir.fzUntil + 300; }   // tweet coins: fast and volatile from the start
       if (tk.dd) tk.dd.text = 'Inspired by ' + q.celeb + '.\n\n' + q.name + ' is the one. Fair launch, LP burned at graduation. Let us cook.';
       if (sim.event) sim.event('news', tk, '$' + tk.ticker + ' launched off a ' + q.celeb + ' tweet');
       if (s && r() < 0.5) this.react(sim.t + 3 + r() * 6, () => { const k = this.kol(); return k && [k, pick(r, ['aping $' + tk.ticker + ' off the ' + q.celeb + ' tweet', '$' + tk.ticker + ' or the other one? sending both', 'too many copies of this already. $' + tk.ticker + ' looks like the og', 'dev of $' + tk.ticker + ' was fast lol']), { coin: tk.id, media: true }]; });

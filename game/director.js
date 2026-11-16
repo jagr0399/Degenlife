@@ -334,6 +334,13 @@
     for (const tk of sim.tokens) {
       const D = tk.dir; if (!D || D.done || tk.dead || tk.isPlayer) continue;
       if (sim.t < D.t0) continue;
+      // Mayhem coins (game/mayhem.js): the agent drives the chart while it trades; after that most coins are done, and the few
+      // survivors play their chart from the new (usually much lower) level
+      if (tk.mayhem) {
+        const M = tk.mayhem;
+        if (!M.done) continue;
+        if (!M.after) { M.after = true; if (!M.survive) { D.done = true; tk.hype = Math.min(tk.hype || 0, 0.15); tk.half = 6; continue; } D.t0 = sim.t; D.mc0 = Math.max(150, sim.mc(tk)); D.sol0 = C.SOL_USD; D.off = 0; D.noise = 0; D.n2 = 0; }
+      }
       if (D.mc0 == null) {
         // rugs, pump-and-dumps and whale coins start with insiders holding a bag bought at the bottom (bundled at launch)
         if (tk.fate2 === 'rug' || tk.fate2 === 'pnd' || tk.fate2 === 'whale') { D.ins = D.ins || BH.Names.addr(r); for (let j = 0; j < r.int(2, 4); j++) sim.exec(tk, BH.Names.addr(r), 'insider', 'buy', r.range(0.8, 2)); }
@@ -372,7 +379,13 @@
       // (megas and legends keep their script; a huge one-off dump isn't absorbed)
       if (!pushT && D.lastMc > 0 && !D.rugged && tk.fate2 !== 'mega' && tk.fate2 !== 'legend' && tk.fate2 !== 'doa' && D.arch !== 'J') { const ext = Math.log(mc / D.lastMc); if (Math.abs(ext) > 0.004 && Math.abs(ext) < 0.25) { D.off = (D.off || 0) + ext; D.offHalf = Math.max(D.offHalf || 25, ext > 0 ? 120 : 80); } }
       D.off *= Math.exp(-dt / (D.offHalf || 25));
-      const target = target0 * Math.exp(D.off);
+      let target = target0 * Math.exp(D.off);
+      // speed limit (Nov 16, playtester: god candles are rare on real charts unless the narrative is really good): past $20K the script may
+      // rise at most ~30% per 15 s, so a big jump becomes a few strong candles. Exempt: J7 insta-bond runners, megas, legends, viral
+      // launches (J) and a KOL ape event (tk.godUntil, game/j7.js), which are the real god candles.
+      const capOk = tk.j7Right || tk.fate2 === 'mega' || tk.fate2 === 'legend' || D.arch === 'J' || (tk.godUntil && sim.t < tk.godUntil);
+      if (!capOk && mc >= 20000 && D.capT > 0 && target > D.capT * Math.exp(0.0175 * dt)) target = D.capT * Math.exp(0.0175 * dt);
+      D.capT = Math.max(target, mc * 0.5);
       // the template's volume sets the hype (what Pulse shows as activity)
       tk.hype = Math.max(0.05, Math.min(3, 0.4 + Math.log10(1 + k[4]) * 0.8));
       tk.half = 30;

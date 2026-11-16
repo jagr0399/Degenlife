@@ -38,6 +38,18 @@
     if (p && p.acc === 'you') { p.likes = 0; p.reposts = 0; p.views = 0; p.replies = 0; p.mine = true; }
     return { ok: true, text: 'Posted to ' + Math.round(me(this).followers).toLocaleString() + ' followers' };
   };
+  // flex a PnL card: an open position (live numbers at post time) or a closed trade. Wins pull likes and followers; losses get roasted
+  S.flex = function (f, caption) {
+    if (!f || !f.ticker) return { ok: false, reason: 'Nothing to flex yet: trade a coin first' };
+    const sign = f.pnl >= 0 ? '+' : '';
+    const auto = f.pnl >= 0 ? pick2(this, ['ez', 'told you', 'another day in the trenches', 'cooked them', 'we eat', 'not bad for a tuesday']) : pick2(this, ['pain', 'it is what it is', 'down bad', 'paid tuition today', 'trenches got me']);
+    const text = String(caption || '').trim().slice(0, 200) || sign + f.pnl.toFixed(2) + ' SOL on $' + f.ticker + ' (' + f.mult.toFixed(2) + 'x). ' + auto;
+    const p = this.post(me(this), 'flex', text, { aboutYou: true, mine: true, coin: f.coin || null, flex: { ticker: f.ticker, pnl: f.pnl, pct: f.invested > 0 ? f.pnl / f.invested * 100 : 0, invested: f.invested, mult: f.mult, open: !!f.open }, likes: 0, reposts: 0, views: 0, replies: 0 });
+    const t = this.game.sys.trencher;
+    if (t) { if (f.pnl > 0) t.followers += Math.min(400, 3 + f.pnl * 12 + Math.max(0, f.mult - 1) * 20); this.note('your flex is getting attention', p.id); }
+    return { ok: true, text: 'Flexed ' + sign + f.pnl.toFixed(2) + ' SOL on $' + f.ticker };
+  };
+  const pick2 = (s, arr) => arr[Math.floor(r(s)() * arr.length)];
   S.like = function (id) {
     const p = find(this, id); if (!p) return { ok: false };
     p.liked = !p.liked; p.likes = Math.max(0, (p.likes || 0) + (p.liked ? 1 : -1));
@@ -73,7 +85,8 @@
       const p = this.posts[i];
       if (!p.mine && p.acc !== 'you') { if (p.views == null) p.views = Math.round((p.likes || 0) * (8 + rr() * 10)); continue; }
       const age = sim.t - p.t; if (age > 600) continue;
-      const fade = Math.exp(-age / 160), base = fol * (0.4 + trust / 100) * fade * dt;
+      const fx = p.flex ? (p.flex.pnl > 0 ? 1 + Math.min(4, p.flex.pct / 80) : 1.3) : 1;   // big wins travel; losses get dunked on
+      const fade = Math.exp(-age / 160), base = fol * (0.4 + trust / 100) * fade * dt * fx;
       const tk = p.coin && sim.byId.get(p.coin), mult = tk && p.mcAt ? sim.mc(tk) / p.mcAt : 1;
       p.views = (p.views || 0) + Math.round(base * 0.05 * (0.5 + rr()));
       const dl = rr() < base * 0.0006 ? 1 + Math.floor(base * 0.0006 * rr()) : 0;
@@ -81,7 +94,7 @@
       if (dl) { p.likes = (p.likes || 0) + dl; if (rr() < 0.3) this.note('@' + FANS[rr.int(0, FANS.length - 1)] + ' and ' + Math.max(0, dl - 1) + ' others liked your post', p.id); }
       if (drt) { p.reposts = (p.reposts || 0) + 1; this.note('@' + FANS[rr.int(0, FANS.length - 1)] + ' reposted you', p.id); if (t) t.followers += rr.range(0.5, 3); }
       if (rr() < base * 0.00008 && (p.replies || 0) < 12) {
-        const kind = mult >= 1.5 ? 'good' : mult < 0.6 ? 'bad' : ['good', 'bad', 'q'][rr.int(0, 2)];
+        const kind = p.flex ? (p.flex.pnl > 0 ? (rr() < 0.75 ? 'good' : 'q') : 'bad') : mult >= 1.5 ? 'good' : mult < 0.6 ? 'bad' : ['good', 'bad', 'q'][rr.int(0, 2)];
         const who = FANS[rr.int(0, FANS.length - 1)];
         p.replies = (p.replies || 0) + 1;
         this.post({ id: 'fan_' + who, name: who, handle: '@' + who, pfp: (who.length * 13) % 143, followers: rr.int(80, 4000) }, 'reply', REPLY[kind][rr.int(0, REPLY[kind].length - 1)], { replyTo: p.id, replyHandle: p.handle, toYou: true });
@@ -90,6 +103,40 @@
     }
     return out;
   };
+  // comments on everyone's posts (Nov 16, playtester: "add dynamic comments"): the count grows over the first ~5 min (about 4% of likes),
+  // and up to 8 sample replies are kept on the post (p.thread) so the thread can be read
+  const RE = {
+    meme: ['ticker?', 'already 7 coins on this lol', 'which one is the real one', 'aped the first one', 'too late, bots got it', 'he is so back', 'deploying rn', 'the copies are everywhere'],
+    call: ['entry?', 'dumping on us again?', 'aped with you ser', 'what MC did you get in', 'chart looks cooked', 'LFG', 'dev wallet?', 'bundled or not?'],
+    take: ['facts', 'ratio', 'this aged well', 'cope', 'real', 'mid take', 'screenshotting this', 'say it louder'],
+    life: ['same', 'lol', 'too relatable', 'this is so real', 'nobody asked', 'W', 'mood', 'why is this me'],
+    news: ['source?', 'huge if true', 'called it', 'bullish', 'bearish', 'fake news', 'what does this mean for sol', 'we are so back'],
+    flex: ['teach me', 'nice entry', 'exit liquidity was me', 'fake pnl', 'congrats ser', 'what did you buy next'],
+  };
+  const NAMES = ['ape_andy', 'mooncat99', 'bagwatcher', 'solsister', 'chartgoblin', 'gm_greg', 'wenlambo_', 'frogmom', 'tinyfish', 'lurker_lou', 'diamondpaw', 'ser_sam', 'pixelpete', 'degenella', 'cope_lord', 'rugsurvivor', 'paperhands_pat', 'trench_tom', 'exitliq_ed', 'jeet_jen', 'onchain_olly', 'sol_sally', 'bondingbecky', 'mev_mike'];
+  const kindOf = (p) => (p.flex ? 'flex' : p.meme || p.kind === 'meme' ? 'meme' : p.coin || p.kind === 'call' || p.kind === 'kol' ? 'call' : p.kind === 'alert' || p.kind === 'news' || p.kind === 'general' || p.kind === 'headline' ? 'news' : p.kind === 'voice' || p.kind === 'narrative' ? 'take' : 'life');
+  S.threadStep = function () {
+    const sim = this.game.sim, rr = r(this);
+    for (let i = this.posts.length - 1; i >= 0 && i >= this.posts.length - 150; i--) {
+      const p = this.posts[i];
+      if (p.mine || p.acc === 'you' || p.kind === 'reply') continue;
+      const age = sim.t - p.t; if (age > 400) continue;
+      const target = Math.round((p.likes || 0) * (p.flex ? 0.08 : 0.04) * Math.min(1, age / 300));
+      if ((p.replies || 0) < target) {
+        const was = p.replies || 0; p.replies = target;
+        // keep a sample of the actual replies (1st, 3rd, 6th, 10th, 20th, 40th...)
+        for (const at of [1, 3, 6, 10, 20, 40, 80, 160]) if (was < at && target >= at && (p.thread || (p.thread = [])).length < 8) {
+          const nm = NAMES[rr.int(0, NAMES.length - 1)] + (rr() < 0.4 ? rr.int(1, 99) : '');
+          const pool = RE[kindOf(p)];
+          let txt = pool[rr.int(0, pool.length - 1)];
+          if (p.coin && rr() < 0.25) { const tk = sim.byId.get(p.coin); if (tk) txt = '$' + tk.ticker + ' ' + (sim.mc(tk) > (p.mcAt || 0) ? 'still going' : 'is cooked'); }
+          p.thread.push({ name: nm, handle: '@' + nm, pfp: (nm.length * 17 + rr.int(0, 50)) % 143, text: txt, t: sim.t, likes: rr.int(0, Math.max(1, Math.round((p.likes || 0) / 200))) });
+        }
+      }
+    }
+  };
+  const origStep2 = S.onStep;
+  S.onStep = function (dt) { const out = origStep2.apply(this, arguments); if (this.game.sim.t - (this._thT || 0) >= 1) { this._thT = this.game.sim.t; this.threadStep(); } return out; };
   S.myPosts = function () { return this.posts.filter((p) => p.mine || p.acc === 'you'); };
   S.unseen = function () { return (this.notes || []).filter((n) => !n.seen).length; };
   S.seeNotes = function () { for (const n of this.notes || []) n.seen = true; return { ok: true }; };

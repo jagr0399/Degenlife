@@ -39,3 +39,22 @@ test('tutorial_has_the_new_steps_with_reasons', () => {
   assert.ok(S.some((x) => x.id === 'post') && S.some((x) => x.id === 'apps'));
   const g = game(); assert.ok(!S.find((x) => x.id === 'post').done(g)); g.sys.social.compose('hi'); assert.ok(S.find((x) => x.id === 'post').done(g));
 });
+
+// Nov 16: flex a PnL; narrative coins quote the tweet they're about
+test('flexing_a_win_posts_a_pnl_card_and_draws_followers', () => {
+  const g = BH.createGame(); g.newGame(1901); const s = g.sys.social, t = g.sys.trencher;
+  const f0 = t.followers;
+  const r = s.flex({ ticker: 'WIN', coin: null, pnl: 2.5, invested: 1, mult: 3.5, open: false });
+  assert.ok(r.ok);
+  const p = s.posts[s.posts.length - 1];
+  assert.ok(p.flex && p.flex.pnl === 2.5 && p.kind === 'flex' && /\+2\.50 SOL on \$WIN/.test(p.text));
+  assert.ok(t.followers > f0);
+  assert.ok(!s.flex(null).ok, 'nothing to flex');
+});
+test('most_coins_quote_the_tweet_they_are_about', () => {
+  const g = BH.createGame(); g.newGame(1902);
+  for (let i = 0; i < 600 * 4; i++) { g.sim.step(0.25); g.player.tick(); }
+  const dd = g.sim.tokens.map((t) => t.dd).filter(Boolean), q = dd.filter((d) => d.quote);
+  assert.ok(q.length / dd.length > 0.35, 'quoted ' + q.length + '/' + dd.length);
+  assert.ok(q.every((d) => d.quote.text && d.quote.acc && d.link && d.link.startsWith('x.com/')));
+});

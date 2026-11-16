@@ -170,7 +170,7 @@
   };
   P.coLaunch = function (pid) {
     const gm = this.game, pt = this.partners.find((x) => x.id === pid); if (!pt) return { ok: false, reason: 'No partner' };
-    if (!gm.sys.build || !gm.sys.build.effects().devdesk) return { ok: false, reason: 'You need the dev desk (Apartment)' };
+    if (!gm.sys.build || !gm.sys.build.effects().devdesk) return { ok: false, reason: 'You need the Deployer license (Shop)' };
     const name = pt.name.split(' ')[0] + ' & You', ticker = (pt.name.slice(0, 2) + 'YOU').toUpperCase();
     const res = gm.player.launchCoin({ name, ticker, desc: 'a collab launch', socials: { x: true, tg: true }, devBuy: 0.3 });
     if (!res.ok) return res;

@@ -124,7 +124,7 @@
       }],
       ['coop', 'Co-op devs', (gm) => {
         const e = gm.sys.empire;
-        return H.card('Launch with a partner', 'handshake', H.note('A partner dev brings their followers to a shared launch. Some are honest. Some will rug you first. You can only guess from their history. Needs the dev desk.') +
+        return H.card('Launch with a partner', 'handshake', H.note('A partner dev brings their followers to a shared launch. Some are honest. Some will rug you first. You can only guess from their history. Needs the Deployer license.') +
           e.partners.map((pt) => msg(esc(pt.name), 'Wants a ' + pt.share + '% split. Their last coins: ' + (pt.honesty > 70 ? 'mostly clean' : pt.honesty > 40 ? 'mixed' : 'a lot of "dev went to sleep"') + '.', H.btn('Co-launch', 'empire.coLaunch|' + pt.id, 'primary'))).join('') +
           (e.coops.length ? H.table(['Coin', 'Partner', 'Outcome'], e.coops.map((c) => [coinLink(gm, c.coin, c.ticker), esc(c.partner), c.done ? '<span class="down">rugged you</span>' : c.rugAt ? '…' : '<span class="up">loyal</span>'])) : ''));
       }],

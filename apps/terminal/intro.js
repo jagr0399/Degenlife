@@ -8,14 +8,14 @@
 
   const INFO = {
     terminal: ['The trading terminal', 'Pulse shows coins as they launch (New Pairs), coins close to bonding (Final Stretch) and coins that made it to a DEX (Migrated). Click a card to open its chart; buy with the presets or the floating instant panel.', 'Read the risk badges before you buy: a high top-10 %, a big dev bag, snipers or bundles usually mean a rug.'],
-    chirp: ['Chirp, the timeline', 'A Twitter-style feed. Post your thoughts or call a coin to your followers; like, repost and reply to anyone. Your posts gather likes, reposts and replies over time.', 'KOL calls really move prices. Big accounts often sell into their own followers.'],
+    chirp: ['J7, the feed', 'The J7 feed (the old Chirp timeline is merged in). Post your thoughts or call a coin to your followers; like, repost and reply to anyone. Your posts gather likes, reposts and replies over time.', 'KOL calls really move prices. Big accounts often sell into their own followers.'],
     scope: ['Scope, the call tracker', 'Every post that mentions a coin, rated STRONG / MEDIUM / WEAK by the account\'s real hit rate.', 'A STRONG call on a young coin is the closest thing to a signal. It still fails a lot.'],
     shop: ['Shop', 'Gear and places, paid in cash. Boxes arrive at your door; open them with E. Leases unlock the Apartment, Office and Tower.', 'Gear has real effects: focus, energy, sanity, sleep, desks, server racks.'],
     bank: ['Bank', 'Move money between SOL and cash, pay debt, restock the fridge and do quick side gigs.', 'Rent and bills are paid in cash. Keep enough for rent day.'],
-    dev: ['Coin Factory', 'Launch your own coins from the dev desk, run giveaways, and (if you must) pull the rug.', 'Clean launches build reputation; rugs make every future launch start colder and raise your heat.'],
+    dev: ['Coin Factory', 'Launch your own coins (Deployer license from the Shop), run giveaways, and (if you must) pull the rug.', 'Clean launches build reputation; rugs make every future launch start colder and raise your heat.'],
     firm: ['Firm', 'Hire traders with different styles and fund their wallets. They trade the same market you do.', 'Watch their mood and PnL. Bad traders lose your money fast.'],
     pad: ['LaunchLab', 'Your own launchpad: fees from every coin launched on it, server racks, moderation and marketing.', 'A rival pad fights you on fees and poaches staff.'],
-    trencher: ['Trencher', 'Your caller career: call coins, grow followers and trust, unlock copy traders and paid shill offers.', 'Selling right after your own call is "dumping on followers" and costs trust.'],
+    trencher: ['Callouts', 'Call a coin you hold (or Buy & Call) to your followers, one callout every 6 hours. Your followers get a push and buy; you get paid daily by how much they made.', 'Selling right after your own call is "dumping on followers" and costs trust.'],
     news: ['News', 'Market events, viral narratives, hacks, regulators and what happened overnight.', 'Narratives decide which coins launch hot.'],
     radio: ['Radio', 'Music stations while you trade: Lofi, Synthwave, Jazz, Chiptune, Ambient.', ''],
     hustle: ['Hustle: your memecoin business', 'Meme Lab mixes traits into coin recipes (find the combos that work). Clients buy your launches early. Hire a crew. Watch your heat.', 'Heat above 40 brings sleuths, 60 gets your launches limited, 80 brings fines.'],

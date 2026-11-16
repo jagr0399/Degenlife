@@ -17,9 +17,9 @@
     launch: 'Make your own coin: name, ticker, picture, launchpad and dev buy. You are the dev now.',
     scope: 'A KOL tracker: which influencers called which coins, and how their calls did.',
     // social
-    chirp: 'The crypto timeline. KOLs, celebrities and degens post calls and news here, and posts move prices. Your own posts and callouts show up here too.',
+    chirp: 'J7, the crypto feed (Chirp merged into it). KOLs, celebrities, alert bots and degens post calls and news here, and posts move prices. Your own posts and callouts show up here too.',
     clout: 'Your reputation as a caller: followers, trust, copy traders, your alpha group, paid deals and Spaces.',
-    trencher: 'Call coins to your followers. If people buy after your call and it pumps, you gain followers and trust; dump on them and you lose it.',
+    trencher: 'Callouts: call a coin with your buy, your followers get a push and ape in. Ranked by how much your followers made; daily rewards in cash.',
     stream: 'Go live and trade on stream. Viewers come for big moves and leave when it is boring; donations and subs pay real in-game cash.',
     // business
     hustle: 'Meme Lab and your crew: make memes and content that pump the coins you hold.',
@@ -31,7 +31,6 @@
     bank: 'Swap cash and SOL, pay bills and rent, check debt and your savings.',
     finance: 'Side gigs (time runs fast while you work), loans, prop firm challenges and airdrops.',
     shop: 'Buy furniture, gear and upgrades for your place. Better gear helps focus and sanity.',
-    daytrade: 'Trade real-looking stocks with cash during market hours. Positions close at the bell.',
     contracts: 'Daily contracts (small goals that refresh every day) and the weekly trader race against four rival degens.',
     // safety & life
     toolkit: 'Stay safe: sniper bot settings, detective cases on rugs, a phishing inbox and cold storage for your SOL.',
@@ -57,9 +56,9 @@
     try {
       const box = $('#instant .in-call'); if (!box || box.querySelector('.ic-how')) return out;
       const how = document.createElement('div'); how.className = 'ic-how';
-      how.innerHTML = '<b>How callouts work:</b> your call went to your followers on Chirp. <b>Buyers</b> = wallets that bought after it. ' +
-        '<b>10+ buyers</b> grows your followers and trust. If it peaks <b>+50%</b> within 2 minutes it counts as a <b>hit</b>. ' +
-        'Selling half your bag within 5 minutes of your own call is <b>dumping on followers</b> and costs trust. Getting rugged costs nothing.';
+      how.innerHTML = '<b>How callouts work:</b> your callout went to your followers as a push, with your buy. A <b>hit</b> is a 2x peak. ' +
+        'Your followers\' PnL is checked at <b>1 h</b> and <b>4 h</b> (1 and 4 real minutes); it decides your followers, trust and your share of the daily <b>Callout Rewards</b>. ' +
+        'Selling half your bag within 5 minutes of your own callout is <b>dumping on followers</b> and costs trust. Getting rugged costs nothing.';
       box.appendChild(how);
     } catch (e) { /* decoration only */ }
     return out;

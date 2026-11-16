@@ -1,5 +1,6 @@
 /* Degen Life tokens (same family as Bagholder v1.0) */
-@font-face { font-family: Inter; src: url(../vendor/inter-latin-wght-normal.woff2) format('woff2'); font-weight: 100 900; }
+/* Geist (OFL) under the name the game already uses; see apps/terminal/app.css */
+@font-face { font-family: Inter; src: url(../vendor/geist-latin-wght-normal.woff2) format('woff2'); font-weight: 100 900; }
 :root {
   --bg: #07080b; --panel: rgba(14, 16, 21, 0.86); --panel-solid: #0e1015; --line: rgba(255, 255, 255, 0.08); --line2: rgba(255, 255, 255, 0.14);
   --text: #e8ecf3; --muted: #8a94a6; --dim: #5b6372;

@@ -64,3 +64,7 @@ Low-poly cars, trees and street props by Quaternius, Kenney and Kay Lousberg, al
 - `pp-traffic-light-1`: "Traffic light" by Kay Lousberg, CC0, https://poly.pizza/m/aYC3t5ymln
 - `pp-trash-can-1`: "Trashcan Small" by Quaternius, CC0, https://poly.pizza/m/i7HDuYDLkx
 - `pp-tree-1`: "Tree" by Quaternius, CC0, https://poly.pizza/m/i4QMw4L64D
+
+## J7 alert sounds (assets/audio/alerts)
+- "SFX Kit" by Wyzowl, CC0 1.0 (public domain), https://github.com/wyzowl/sfx-kit: notification, tone, money, props, phone, digital, celebration, cinematic, bass, sting and pop sounds (converted to .ogg, trimmed to 4 s, mono). License: assets/audio/alerts/SFX-KIT-LICENSE-CC0.txt
+- "Interface Sounds" by Kenney (kenney.nl), CC0, via https://github.com/Calinou/kenney-interface-sounds: glass_004, confirmation_003, maximize_008, question_001, glitch_002, toggle_002. License: assets/audio/alerts/KENNEY-LICENSE.txt

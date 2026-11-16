@@ -117,6 +117,21 @@
       'Dev is doxxed (trust me). LP gets burned at graduation. Roadmap: memes → more memes → the moon.',
       'Saw this on a stream with 40k viewers and nobody had launched it. So I did. $' + tk.ticker + ' is here.',
     ];
+    // a narrative coin quotes the tweet it's about (playtester, Nov 16): the dev says what's going viral, links it, and the tweet
+    // shows quoted under the post. Sources are made-up everyday accounts and Chirp callers (real people never get invented words).
+    if (!mine && r() < 0.6) {
+      const j7 = this.game.sys.j7, sim = this.game.sim, lname = tk.name.toLowerCase();
+      let src = null;
+      if (j7 && BH.J7) { const pool = BH.J7.ACCOUNTS.filter((a) => a[7] === 'people' || a[7] === 'noise' || a[7] === 'general'); if (pool.length) { const a = pick(r, pool), ac = j7.acc(a[0]); src = { id: a[0], name: ac.name, handle: ac.handle, pfp: ac.pfp, pfpUrl: ac.pfpUrl || null, verified: ac.verified, followers: ac.followers }; } }
+      if (!src) { const k = pick(r, this.kols); src = { name: k.name, handle: k.handle, pfp: k.pfp, verified: k.verified, followers: k.followers }; }
+      const SRC = ['{n} is going viral and nobody has launched it yet', 'everyone in the group chat is saying "{l}" now', 'just found out {l} is a thing. the internet wins today', 'the {l} video has 4M views in 6 hours', 'why is my entire feed {l} today', '{l} >>> everything else on my timeline', 'my little brother will not stop saying {l}', 'ok who started the {l} trend, it is everywhere', 'new {l} meme just dropped and it is perfect'];
+      const DEV = ['There is a new {l} trend going super viral right now and nobody had launched it yet, so I did.', 'This is the meme of the week. {n} is all over the timeline.', 'Saw this blow up in the last hour. {n} needed a coin.', 'the {l} meta is just getting started. look at this:', 'Everyone is posting {l} right now. Community takeover welcome.'];
+      const fill = (s) => s.split('{n}').join(tk.name).split('{l}').join(lname);
+      const qt = fill(pick(r, SRC)), sid = String(1800000000000000000 + Math.floor(r() * 2e17));
+      const quote = { acc: src, text: qt, t: sim.t - (40 + r() * 1500), sid };
+      if (j7 && src.id && r() < 0.3) { const tw = j7.post(src.id, qt, { kind: 'people' }); if (tw) quote.t = tw.t; }
+      return { acc: dev, text: fill(pick(r, DEV)), t: sim.t, quote, link: 'x.com/' + src.handle.replace('@', '') + '/status/' + sid };
+    }
     return { acc: dev, text: pick(r, hooks) + '\n\n' + pick(r, bodies), t: this.game.sim.t };
   };
 
@@ -218,15 +233,18 @@
     else if (k === 'firm' && this.game.sys.firm) { const t = this.game.sys.firm.staff.find((x) => 'FIRM-' + x.id === tr.addr); name = t ? t.name : 'Your firm'; pf = t ? t.pfp : 3; }
     else if (tracked) { name = tracked.name; pf = hs % 143; }
     else if (k === 'whale' && this.game.sys.whales && this.game.sys.whales.byAddr(tr.addr)) { const wh = this.game.sys.whales.byAddr(tr.addr); name = wh.name; pf = wh.pfp % 143; }
+    else if (BH.Mayhem && tr.addr === BH.Mayhem.AGENT) { name = 'Mayhem Agent'; pf = 99; }
+    else if (BH.J7 && BH.J7.names[tr.addr]) { const a = BH.J7.names[tr.addr]; name = a.name; pf = a.pfp % 143; }   // J7 KOLs trade under their own name
     else if (k === 'kol' && tk.kol) { name = (tk.kol.handle || 'caller').replace('@', ''); pf = hs % 143; }
     else if (k === 'dev') { name = tk.dd ? tk.dd.acc.handle.replace('@', '') : 'dev'; pf = tk.dd ? tk.dd.acc.pfp : hs % 143; }
     else { name = NICK[hs % NICK.length] + (hs % 7 === 0 ? '' : String(hs % 97)); pf = hs % 143; }
     const b = tk.bubbles || (tk.bubbles = []);
     const last = b[b.length - 1];
-    if (last && last.addr === tr.addr && last.side === tr.side && tr.t - last.t < 4) { last.sol += tr.sol; last.mc = tr.mc; last.n = (last.n || 1) + 1; return; }
+    if (last && last.addr === tr.addr && last.side === tr.side && tr.t - last.t < 4) { last.sol += tr.sol; last.tok = (last.tok || 0) + (tr.tok || 0); last.mc = tr.mc; last.n = (last.n || 1) + 1; return; }
     let thesis = tk._nextThesis || null;
     if (!thesis && k === 'kol') { for (let q = this.posts.length - 1; q >= 0 && q > this.posts.length - 120; q--) { const pp = this.posts[q]; if (pp.coin === tk.id && pp.kind === 'call') { thesis = pp.text; break; } } }
-    b.push({ t: tr.t, side: tr.side, sol: tr.sol, mc: tr.mc, addr: tr.addr, kind: tr.you ? 'you' : k, name, pfp: pf, plat: hs % 3, thesis: thesis || undefined });
+    const j7a = BH.J7 && BH.J7.names[tr.addr];
+    b.push({ t: tr.t, side: tr.side, sol: tr.sol, tok: tr.tok, mc: tr.mc, addr: tr.addr, kind: tr.you ? 'you' : k, name, pfp: pf, pfpUrl: (j7a && j7a.pfpUrl) || undefined, plat: hs % 3, thesis: thesis || undefined });
     // keep the whole history (bubbles used to vanish); past 600, drop the smallest old retail trades first
     if (b.length > 4000) { const i = b.findIndex((x) => x.kind !== 'you' && x.kind !== 'whale' && x.kind !== 'kol' && x.kind !== 'dev' && x.sol < 2); b.splice(i >= 0 ? i : 0, 1); }
   };

@@ -1,4 +1,4 @@
-/* Named whales with real habits (playtest feedback: a whale buys 50-150 SOL into a coin and holds; it doesn't buy and sell
+/* Named whales with real habits (the playtester's feedback: a whale buys 50-150 SOL into a coin and holds; it doesn't buy and sell
    in the same breath). About 20 persistent wallets, each with a style, a bankroll and its own positions:
    - conviction: 20-150 SOL in 1-4 clips into coins already worth $200K+ with momentum, holds 15-120 game minutes,
      trims a third at 3x and 5x, gives up at -60% or a rug
@@ -51,6 +51,7 @@
   P.wants = function (w, tk) {
     const sim = this.game.sim, mc = sim.mc(tk), age = sim.t - tk.born;
     if (tk.dead || tk.rugged || tk.isPlayer || w.pos[tk.id]) return false;
+    if (tk.mayhem && !tk.mayhem.done) return false;   // no whale buys into a coin the Mayhem bot is chopping
     const ch = sim.change(tk, 60);
     if (w.style === 'conviction') return mc > 200000 && mc < 3e7 && tk.stage === 'amm' && ch > 15 && (sim.risk(tk).top10 < 35);
     if (w.style === 'swing') return mc > 40000 && mc < 1e7 && ch > 25;

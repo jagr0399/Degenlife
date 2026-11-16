@@ -14,11 +14,11 @@
 
   const PAGES = {
     chirp: {
-      nav: ['message-circle', 'Chirp'],
+      nav: ['message-circle', 'J7'],
       tab: 'all',
       build(el) {
         const gm = game(), t = gm.sys.trencher;
-        el.innerHTML = '<div class="xp chirp"><section class="xcol"><h1>' + icon('message-circle', 'lg') + 'Chirp</h1>' +
+        el.innerHTML = '<div class="xp chirp j7page"><section class="xcol"><h1>' + icon('message-circle', 'lg') + 'J7 <span class="j7-sim">SIM</span></h1>' +
           '<div class="cw"><img class="sv-pfp" id="cwAv" src="' + V.pfp(BASE, game().meta.pfp != null ? game().meta.pfp : 47) + '"><div class="cw-main"><textarea id="cwText" maxlength="280" placeholder="What\'s happening in the trenches?"></textarea>' +
           '<div class="cw-bar"><select id="cwCoin"><option value="">No coin</option></select><span class="dim" id="cwCount">0/280</span><div class="spacer"></div><button class="btn primary sm" id="cwPost">Post</button></div></div></div>' +
           '<div class="seg cw-tabs"><button data-ft="all">For you</button><button data-ft="following">Following</button><button data-ft="mine">Your posts</button><button data-ft="notes">Notifications <b id="cwN"></b></button></div>' +
@@ -42,6 +42,7 @@
             inp.click(); return;
           }
           const pf = e.target.closest('[data-pfp]'); if (pf) { gm.meta.pfp = +pf.dataset.pfp; $('#cwAv').src = V.pfp(BASE, gm.meta.pfp); $('#cwPick').hidden = true; $('#cwMe')._h = null; toast({ ok: true, text: 'Profile picture updated' }); this.render(true); return; }
+          if (BH.J7UI && BH.J7UI.click(e, () => { $('#xFeed')._h = null; this.render(true); })) return;
           V.feedClick(gm, e, () => { $('#xFeed')._h = null; this.render(true); });
         });
         void t;
@@ -65,7 +66,7 @@
         if (this.tab === 'notes') html = (s.notes || []).length ? s.notes.slice(0, 40).map((x) => '<div class="cw-note' + (x.seen ? '' : ' new') + '">' + icon(/liked/.test(x.text) ? 'heart' : /repost/.test(x.text) ? 'repeat-2' : 'message-circle', 'sm') + '<span>' + esc(x.text) + '</span></div>').join('') : '<div class="sv-empty">No notifications yet. Post something.</div>';
         else if (this.tab === 'mine') { const mine = s.myPosts().slice(-40).reverse(); html = mine.length ? mine.map((x) => V.postHTML(gm, BASE, x)).join('') : '<div class="sv-empty">You have not posted yet. Say something above, or pick a coin to call it.</div>'; }
         else if (this.tab === 'following') { const fol = s.following || {}; html = Object.values(fol).some(Boolean) ? V.chirpHTML(gm, BASE, 50, (x) => fol[x.handle]) : '<div class="sv-empty">Follow accounts from "Who to follow" to see only their posts here.</div>'; }
-        else html = V.chirpHTML(gm, BASE, 50);
+        else html = BH.J7UI ? BH.J7UI.feedHTML(50) : V.chirpHTML(gm, BASE, 50);   // J7 is the one feed: same cards as the J7 panel
         setHTML(feed, html);
         const nowT = performance.now(); if (full || !this._sideT || nowT - this._sideT > 1000) { this._sideT = nowT; setHTML($('#xTrend'), V.trendsHTML(gm)); setHTML($('#xWho'), V.whoHTML(gm, BASE)); }   // the side cards change slowly: once a second
         setHTML($('#cwMe'), t ? '<div class="cw-me"><img class="sv-pfp" src="' + V.pfp(BASE, gm.meta.pfp != null ? gm.meta.pfp : 47) + '"><div><b>You</b><span class="dim">' + esc(t.handle || '@you') + '</span></div><button class="btn sm" data-pickpfp>Change picture</button></div><div class="kv"><span>Followers</span><b>' + Math.round(t.followers).toLocaleString() + '</b></div><div class="kv"><span>Trust</span><b>' + Math.round(t.trust) + '/100</b></div><div class="kv"><span>Posts</span><b>' + s.myPosts().length + '</b></div><div class="kv"><span>Likes on your posts</span><b>' + s.myPosts().reduce((a, x) => a + (x.likes || 0), 0).toLocaleString() + '</b></div>' : '');
@@ -113,7 +114,7 @@
       },
       render() {
         const gm = game(), f = gm.sys.factory, b = gm.sys.build;
-        if (!b.effects().devdesk) { setHTML($('#xDev'), '<div class="card lock">' + icon('hammer', 'lg') + '<h2>Coin Factory needs a Dev desk</h2><p>Lease the Apartment, then buy the Dev desk in the Shop. You can still launch coins from the Launch tab, but community tools and the RUG button live at the dev desk.</p><button class="btn primary" data-go="shop">' + icon('shopping-bag', 'sm') + 'Open Shop</button></div>'); return; }
+        if (!b.effects().devdesk) { setHTML($('#xDev'), '<div class="card lock">' + icon('hammer', 'lg') + '<h2>Coin Factory needs a Deployer license</h2><p>Buy the Deployer license in the Shop ($250, works right away, anywhere). Deploying your own coins (the Launch tab and DEPLOY in J7), community tools and the RUG button all need it.</p><button class="btn primary" data-go="shop">' + icon('shopping-bag', 'sm') + 'Open Shop</button></div>'); return; }
         const coins = f.myCoins().filter((t) => !t.dead);
         const sim = gm.sim;
         setHTML($('#xDev'), '<h1>' + icon('hammer', 'lg') + 'Coin Factory<div class="spacer"></div><button class="btn primary" data-go="launch">' + icon('rocket', 'sm') + 'Launch a coin</button></h1>' +

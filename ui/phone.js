@@ -3,7 +3,7 @@
   'use strict';
   const BH = g.BH;
   const V = () => BH.SocialView;
-  const TABS = [['chirp', 'message-circle', 'Chirp'], ['bank', 'landmark', 'Bank'], ['scope', 'radar', 'Scope'], ['news', 'newspaper', 'News'], ['map', 'map', 'Map'], ['trophies', 'trophy', 'Trophies'], ['story', 'book-open', 'Story']];
+  const TABS = [['chirp', 'message-circle', 'J7'], ['bank', 'landmark', 'Bank'], ['scope', 'radar', 'Scope'], ['news', 'newspaper', 'News'], ['map', 'map', 'Map'], ['trophies', 'trophy', 'Trophies'], ['story', 'book-open', 'Story']];
 
   const Phone = {
     el: null, tab: 'chirp', open: false, onTravel: null, onCoin: null,
@@ -58,7 +58,7 @@
       for (const b of this.el.querySelectorAll('[data-tab]')) b.classList.toggle('on', b.dataset.tab === this.tab);
       const body = document.getElementById('phBody');
       let html = '';
-      if (this.tab === 'chirp') html = '<div class="ph-h">Chirp</div><div class="ph-heat">' + v.heatHTML(game) + '</div><div class="sv-feed">' + v.chirpHTML(game, 'assets/', 25) + '</div>';
+      if (this.tab === 'chirp') html = '<div class="ph-h">J7</div><div class="ph-heat">' + v.heatHTML(game) + '</div><div class="sv-feed">' + v.chirpHTML(game, 'assets/', 25) + '</div>';
       if (this.tab === 'bank') html = this.bankHTML(game);
       if (this.tab === 'scope') html = '<div class="ph-h">Scope</div>' + v.scopeHTML(game, 'assets/', 25);
       if (this.tab === 'news') html = '<div class="ph-h">Degen News Network</div>' + v.newsHTML(game);

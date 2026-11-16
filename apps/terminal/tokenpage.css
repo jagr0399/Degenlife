@@ -1,0 +1,102 @@
+/* Token page redesign (apps/terminal/tokenpage.js), after the playtester's Axiom reference */
+body.tp2 .tpage #thead { display: none; }
+.thead2 { display: flex; align-items: center; gap: 18px; padding: 10px 14px; border-bottom: 1px solid #1c2029; background: #0b0c10; min-width: 0; overflow: hidden; }
+.thead2 .tp-ava { position: relative; width: 46px; height: 46px; flex: none; border-radius: 9px; overflow: hidden; border: 2px solid #1f2430; }
+.thead2 .tp-ava img.cimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tp-id { display: grid; gap: 4px; min-width: 0; flex: 0 1 auto; }
+.tp-l1, .tp-l2 { display: flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; }
+.tp-tk { font-size: 17px; letter-spacing: -.01em; }
+.tp-nm { color: #9aa3b2; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.tp-bdg { display: inline-flex; align-items: center; gap: 3px; height: 18px; padding: 0 6px; border-radius: 5px; font: 700 10.5px Inter, sans-serif; background: #1b1f29; color: #b9c0cc; flex: none; }
+.tp-bdg.pair { background: rgba(79, 140, 255, .14); color: #7fb0ff; }
+.tp-bdg.div { background: rgba(43, 214, 123, .14); color: #2bd67b; }
+.tp-bdg.you { background: rgba(244, 178, 62, .16); color: #f4b23e; }
+.tp-bdg.bad { background: rgba(255, 77, 94, .15); color: #ff6b7a; }
+.tp-ic { width: 22px; height: 22px; display: inline-grid; place-items: center; border: 0; background: none; color: #7d8594; cursor: pointer; border-radius: 5px; flex: none; }
+.tp-ic:hover { background: #1b1f29; color: #e8ecf3; }
+.tp-age { color: #2bd67b; font-weight: 700; font-size: 12px; }
+.tp-pad { display: inline-flex; align-items: center; gap: 4px; height: 18px; padding: 0 7px; border-radius: 9px; border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); color: var(--c); font: 700 10.5px Inter, sans-serif; }
+.tp-pad i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.tp-s { color: #7d8594; display: inline-flex; }
+.tp-ca { color: #6b7380; font-size: 11.5px; }
+.tp-mig { font: 700 10px Inter, sans-serif; color: #7fb0ff; background: rgba(79, 140, 255, .12); padding: 2px 6px; border-radius: 4px; }
+.tp-mig.curve { color: #f4b23e; background: rgba(244, 178, 62, .12); }
+.tp-mc { font-size: 22px; font-weight: 800; letter-spacing: -.02em; flex: none; }
+.tp-st { display: grid; gap: 2px; flex: none; }
+.tp-st span { color: #7d8594; font-size: 11.5px; }
+.tp-st b { font-size: 13.5px; display: inline-flex; align-items: center; gap: 4px; }
+.thead2 .spacer { flex: 1; }
+.tp-it, .tp-kol { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px; border-radius: 15px; border: 1px solid #3b4ad6; background: rgba(79, 91, 213, .12); color: #9aa6ff; font: 700 12.5px Inter, sans-serif; cursor: pointer; flex: none; white-space: nowrap; }
+.tp-it:hover { background: rgba(79, 91, 213, .24); }
+.tp-kol { border-color: #3a3220; background: rgba(244, 178, 62, .06); color: #d9a443; }
+.tp-kol.on { background: rgba(244, 178, 62, .2); color: #f4c15e; border-color: #f4b23e; }
+.tp-it.sm { height: 24px; padding: 0 10px; margin-left: auto; font-size: 11.5px; }
+.tp-sol { display: inline-block; width: 11px; height: 9px; flex: none; background: linear-gradient(135deg, #9945ff, #14f195); clip-path: polygon(15% 0, 100% 0, 85% 25%, 0 25%, 15% 37%, 100% 37%, 85% 62%, 0 62%, 15% 75%, 100% 75%, 85% 100%, 0 100%); }
+/* narrower terminal: drop the least important stats first */
+@media (max-width: 1700px) { .tp-st[data-k="supply"], .tp-st[data-k="holders"] { display: none; } }
+body.j7on .thead2 .tp-st[data-k="supply"], body.j7on .thead2 .tp-st[data-k="holders"], body.j7on .thead2 .tp-st[data-k="fees"] { display: none; }
+@media (max-width: 1500px) { body.j7on .thead2 .tp-st[data-k="liq"] { display: none; } }
+.tp-tile b { white-space: nowrap; }
+
+/* right column */
+.ts-top { padding: 10px; display: grid; gap: 10px; }
+.tp-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.tp-tile { display: grid; justify-items: center; gap: 2px; padding: 6px 0; border-radius: 8px; border: 1px solid #22262f; background: #0e1015; }
+.tp-tile span { color: #7d8594; font-size: 11px; }
+.tp-tile b { font-size: 12.5px; }
+.tp-flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.tp-flow > div { display: grid; gap: 1px; min-width: 0; }
+.tp-flow span { color: #7d8594; font-size: 11px; }
+.tp-flow b { font-size: 13px; }
+.tp-flow small { color: #6b7380; font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tp-bar { height: 3px; border-radius: 2px; background: #ff4d5e; overflow: hidden; }
+.tp-bar i { display: block; height: 100%; background: #2bd67b; }
+body.tp2 #bs { border-radius: 22px; padding: 3px; background: #11131a; border: 1px solid #22262f; }
+body.tp2 #bs button { border-radius: 18px; height: 34px; font-weight: 700; }
+body.tp2 #bs button.on[data-side="buy"] { background: #2bd67b; color: #06140c; }
+body.tp2 #bs button.on[data-side="sell"] { background: #ff4d5e; color: #1a0508; }
+.tp-mode { display: flex; align-items: center; gap: 4px; margin: 8px 0 6px; }
+.tp-mode button { border: 0; background: none; color: #7d8594; font: 650 12.5px Inter, sans-serif; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
+.tp-mode button.on { background: #1b1f29; color: #e8ecf3; }
+.tp-mode .spacer { flex: 1; }
+.tp-bal { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border-radius: 12px; border: 1px solid #22262f; font: 700 12px Inter, sans-serif; }
+body.tp2 #presets { grid-template-columns: repeat(4, 1fr) !important; gap: 6px; }
+body.tp2 #presets button { height: 32px; border-radius: 9px; border: 1px solid #262b35; background: #0e1015; font-weight: 700; }
+body.tp2 #presets button:hover { border-color: #3a4150; }
+body.tp2 #go { border-radius: 22px; height: 44px; font-size: 15px; }
+body.tp2 .settingsrow { display: none; }
+body.tp2 .settingsrow.show { display: flex; }
+.tp-mini { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid #22262f; border-radius: 9px; margin-top: 8px; overflow: hidden; }
+.tp-mini > div { display: grid; gap: 2px; padding: 6px 8px; border-right: 1px solid #22262f; min-width: 0; }
+.tp-mini > div:last-child { border-right: 0; }
+.tp-mini span { color: #7d8594; font-size: 10.5px; }
+.tp-mini b { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; white-space: nowrap; overflow: hidden; }
+.tp-info h3 { margin: 0 0 8px; font-size: 14px; }
+.tp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.tp-it2 { display: grid; justify-items: center; gap: 4px; padding: 9px 4px; border-radius: 9px; border: 1px solid #22262f; background: #0e1015; text-align: center; }
+.tp-it2 b { font-size: 14px; }
+.tp-it2 b.warn { color: #f4b23e; }
+.tp-it2 span { display: inline-flex; align-items: center; gap: 4px; color: #7d8594; font-size: 10.5px; white-space: nowrap; }
+/* the old risk grid lives on hidden (its vamp warning stays visible) */
+body.tp2 #tside .panel:has(#riskgrid) > h3, body.tp2 #riskgrid, body.tp2 #riskgrid + .note { display: none; }
+body.tp2 #tside .panel:has(#riskgrid):not(:has(#vampRow)) { display: none; }
+/* bottom tabs */
+body.tp2 #ttabs { display: flex; align-items: center; }
+body.tp2 #ttabs button[data-t] { font-weight: 650; }
+.thead2 { gap: 12px; }
+body.j7on .thead2 .tp-st[data-k="bag"] { display: none; }
+body.j7on .thead2 .tp-nm { max-width: 90px; }
+.tp-kol.sm { height: 24px; padding: 0 10px; margin-left: auto; font-size: 11.5px; }
+#ttabs .tp-kol.sm + .tp-it.sm { margin-left: 6px; }
+/* keep the center column's rows inside it (a wide trades table scrolls in its own box instead of stretching the row) */
+body.tp2 .tmain > * { min-width: 0; }
+body.tp2 .tmain .bottom { min-width: 0; overflow: hidden; display: grid; grid-template-rows: auto 1fr; }
+body.tp2 .tmain .tbl-wrap { overflow: auto; min-width: 0; }
+body.tp2 #ttabs { min-width: 0; overflow: hidden; }
+body.j7on .tpage { grid-template-columns: minmax(0, 1fr) 320px; }
+
+/* Axiom-style bottom tabs (Nov 16) */
+#ttabs button { font-weight: 600; }
+.tp-devsum { padding: 8px 12px; color: var(--text-2); font-size: 12px; border-bottom: 1px solid var(--line); }
+.tp-devsum b { color: var(--text); }
+#tbl tr[data-open] { cursor: pointer; }

@@ -66,7 +66,6 @@
         const sim = this.game.sim, r = this._r;
         const live = sim.tokens.filter((t) => !t.dead && !t.rugged && t.narrative === nar && t.dir && !t.dir.done).sort((a, b) => sim.mc(b) - sim.mc(a)).slice(0, 4);
         for (const tk of live) this.nudge(tk, 1.12 + r() * 0.3 * c.power);
-        if (live.length) this.game.emit('toast', { kind: 'call', text: live.length + ' ' + (this.game.sys.social ? this.game.sys.social.label(nar) : nar) + ' coin' + (live.length > 1 ? 's are' : ' is') + ' pumping on the ' + c.name + ' tweet' });
       }
     } catch (e) { /* the tweet itself already happened */ }
     return out;

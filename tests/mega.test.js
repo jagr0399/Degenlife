@@ -33,7 +33,7 @@ for (const real of [true, false]) {
     let bondAt = null, peak = 0;
     for (let s = 0; s < 900 && !tk.dead; s++) { step(g, 1); if (!bondAt && tk.stage === 'amm') bondAt = g.sim.t - tk.born; peak = Math.max(peak, g.sim.mc(tk)); }
     assert.ok(bondAt != null && bondAt < 90, 'bonded after ' + bondAt + 's');
-    assert.ok(peak > 2e6, 'peak $' + Math.round(peak));
+    assert.ok(peak > (real ? 2e6 : 1e6), 'peak $' + Math.round(peak));   // generated megas run to roughly $0.5-3M; the real $MAX chart goes past $2M
     const betas = g.sim.tokens.filter((t) => t.betaOf === tk.id);
     // dead betas get pruned from the live list, so count what the mega system launched
     const launched = g.sys.mega && g.sys.mega.parents[tk.id] ? g.sys.mega.parents[tk.id].betas : betas.length;

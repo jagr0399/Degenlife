@@ -5,7 +5,7 @@
  * - no network: every request outside degen:// is blocked
  * - `--shot=<file.png> [--scene=<hash>] [--wait=<ms>] [--size=WxH]` renders offscreen, saves a screenshot, quits
  */
-const { app, BrowserWindow, Menu, ipcMain, protocol, session, net } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, protocol, session, net, shell } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { writeSave, readSave, listSlots } = require('./savefiles');
@@ -32,9 +32,28 @@ const MIME = {
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'degen', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } }]);
 
+// My Music (Nov 16): your own songs play on the in-game radio. Put audio files in Music\Degen Life; only audio files
+// from that one folder (and one level of sub-folders) are served, and only to this game.
+const MY_MUSIC = path.join(app.getPath('music'), 'Degen Life');
+const AUDIO_EXT = new Set(['.mp3', '.ogg', '.wav', '.m4a', '.flac', '.opus', '.webm']);
+function listMyMusic() {
+  const out = [];
+  try { fs.mkdirSync(MY_MUSIC, { recursive: true }); } catch (e) { /* ignore */ }
+  const walk = (dir, rel, depth) => { let ents = []; try { ents = fs.readdirSync(dir, { withFileTypes: true }); } catch (e) { return; }
+    for (const d of ents) { if (d.isDirectory() && depth < 1) walk(path.join(dir, d.name), rel + d.name + '/', depth + 1); else if (d.isFile() && AUDIO_EXT.has(path.extname(d.name).toLowerCase())) out.push(rel + d.name); } };
+  walk(MY_MUSIC, '', 0);
+  return out.slice(0, 2000);
+}
+ipcMain.handle('degen:myMusic', () => listMyMusic());
+ipcMain.handle('degen:openMyMusic', () => { try { fs.mkdirSync(MY_MUSIC, { recursive: true }); } catch (e) { /* ignore */ } shell.openPath(MY_MUSIC); return MY_MUSIC; });
 function serve(req) {
   const u = new URL(req.url);
   let rel = decodeURIComponent(u.pathname).replace(/^\/+/, '') || 'index.html';
+  if (rel.startsWith('mymusic/')) {
+    const f = path.resolve(MY_MUSIC, rel.slice(8));
+    if (!f.startsWith(MY_MUSIC + path.sep) || !AUDIO_EXT.has(path.extname(f).toLowerCase())) return new Response('Forbidden', { status: 403 });
+    try { return new Response(fs.readFileSync(f), { headers: { 'content-type': MIME[path.extname(f).toLowerCase()] || 'audio/mpeg' } }); } catch { return new Response('Not found', { status: 404 }); }
+  }
   const file = path.resolve(ROOT, rel);
   if (!file.startsWith(ROOT + path.sep) && file !== ROOT) return new Response('Forbidden', { status: 403 });
   try {

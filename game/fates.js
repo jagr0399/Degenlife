@@ -72,10 +72,10 @@
         for (const w of S.whales) {
           if (!w.selling && w.done < w.steps && sim.t >= w.next) {
             const sol = Math.min(45, Math.max(0.8, mc * r.range(0.01, 0.06) / C.SOL_USD));
-            if (sim.exec(tk, w.addr, 'whale', 'buy', sol)) { w.done++; tk.hype += r.range(0.25, 0.6); }
+            if (sim.exec(tk, w.addr, 'whale', 'buy', sol)) { w.done++; w.lastBuy = sim.t; tk.hype += r.range(0.25, 0.6); }
             w.next = sim.t + r.range(6, 45);
           }
-          if (!w.selling && (w.done >= w.steps || mc >= S.target)) { w.selling = true; w.next = sim.t + r.range(5, 30); }
+          if (!w.selling && (w.done >= w.steps || mc >= S.target)) { w.selling = true; w.next = Math.max(sim.t + r.range(5, 30), (w.lastBuy || 0) + 12); }   // never flips its own buy within seconds
           if (w.selling && sim.t >= w.next) {
             const h = tk.holders.get(w.addr);
             if (h && h.tokens > 1) { const left = w.chunks - w.sold; sim.exec(tk, w.addr, 'whale', 'sell', left <= 1 ? h.tokens : h.tokens / left * r.range(0.7, 1.3)); w.sold++; tk.hype *= 0.85; }

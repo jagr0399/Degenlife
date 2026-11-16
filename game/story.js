@@ -33,7 +33,7 @@
       ] },
     { n: 3, title: 'Moving Up', blurb: 'A real desk. Now you can make coins, not just trade them.',
       goals: [
-        { id: 'launch', text: 'Launch your first coin (dev desk)', done: (gm) => gm.player.myCoins.length > 0 },
+        { id: 'launch', text: 'Launch your first coin (Deployer license, Shop)', done: (gm) => gm.player.myCoins.length > 0 },
         { id: 'k20', text: 'Reach $20,000 net worth', done: (gm) => net(gm) >= 20000 },
         { id: 'office', text: 'Lease the Office and hire a trader', done: (gm) => has(gm, 'office') && gm.sys.firm && gm.sys.firm.staff.length > 0 },
       ] },
